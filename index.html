@@ -1,1571 +1,1869 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Operation WaveGuard — Tsunami Early Warning System</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Nunito:wght@300;400;600&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+/* ─── PALETTE ──────────────────────────────────────────────────
+   Deep midnight navy  #0d1b2a
+   Ink ocean           #1b2d44
+   Slate panel         #243b55
+   Dusty navy          #2e4a6b
+   Steel blue          #4a7fa5
+   Periwinkle          #7ba7c9
+   Soft sky            #a8c8e8
+   Mist                #c8dff0
+   Warm accent         #5b9ec9  (main accent — warm, not robotic)
+   Deep teal           #2a7a8c
+   Sea foam            #4daeaa
+   Sandy gold          #c8a96e  (highlights / warnings)
+   Coral danger        #c96b6b
+   Sage green          #6baa7a
+─────────────────────────────────────────────────────────────── */
+:root{
+  --bg:       #0d1b2a;
+  --bg2:      #1b2d44;
+  --panel:    #243b55;
+  --border:   #2e4a6b;
+  --border2:  #3d5f80;
+  --accent:   #5b9ec9;
+  --accent2:  #7ba7c9;
+  --teal:     #4daeaa;
+  --teal2:    #2a7a8c;
+  --mist:     #a8c8e8;
+  --text:     #c8dff0;
+  --muted:    #6888a5;
+  --gold:     #c8a96e;
+  --danger:   #c96b6b;
+  --green:    #6baa7a;
+  --font-head: 'Cinzel', serif;
+  --font-body: 'Nunito', sans-serif;
+  --font-mono: 'Courier Prime', monospace;
+}
 
-// ── Utility helpers ──────────────────────────────────────────────────────────
-const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
-const lerp = (a, b, t) => a + (b - a) * t;
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--font-body);
+  line-height:1.6;
+  overflow-x:hidden;
+}
 
-// ── Colour tokens ────────────────────────────────────────────────────────────
-const C = {
-  bg:      "#020c18",
-  panel:   "#041428",
-  border:  "#0a2a4a",
-  cyan:    "#00e5ff",
-  cyanDim: "#007a8c",
-  blue:    "#0066cc",
-  teal:    "#00b4d8",
-  red:     "#ff3b3b",
-  orange:  "#ff8c00",
-  green:   "#00ff88",
-  text:    "#c8e6f5",
-  muted:   "#4a7a9b",
+/* scrollbar */
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+
+/* ─── KEYFRAMES ─────────────────────────────────────────────── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
+@keyframes waveScroll{from{background-position-x:0}to{background-position-x:240px}}
+@keyframes pulsing{0%,100%{opacity:.9}50%{opacity:.4}}
+@keyframes radarSpin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+@keyframes ringOut{0%{r:0;opacity:.8}100%{r:130;opacity:0}}
+@keyframes bobFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+@keyframes shimmer{0%,100%{box-shadow:0 0 8px var(--accent)40}50%{box-shadow:0 0 22px var(--accent)99}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.15}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-4px)}40%{transform:translateX(4px)}60%{transform:translateX(-3px)}80%{transform:translateX(3px)}}
+@keyframes loadBar{from{width:0}to{width:100%}}
+@keyframes spin360{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+@keyframes seismicMove{from{left:15%}to{left:82%}}
+@keyframes tsunamiMove{from{left:15%}to{left:74%}}
+
+/* ─── UTILITY ───────────────────────────────────────────────── */
+.head{font-family:var(--font-head)}
+.mono{font-family:var(--font-mono)}
+.fade-up{animation:fadeUp .7s ease both}
+.float{animation:bobFloat 3.2s ease-in-out infinite}
+.shimmer{animation:shimmer 2.5s ease-in-out infinite}
+.blink{animation:blink .85s step-end infinite}
+.shake{animation:shake .4s ease-in-out infinite}
+
+/* ─── PANELS ────────────────────────────────────────────────── */
+.panel{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:18px;
+  position:relative;
+  overflow:hidden;
+}
+.panel::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--accent)66,transparent);
+}
+.panel-title{
+  font-family:var(--font-head);
+  color:var(--accent);
+  font-size:11px;
+  letter-spacing:3px;
+  text-transform:uppercase;
+  margin-bottom:14px;
+  display:flex;align-items:center;gap:10px;
+}
+.panel-title::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--accent)44,transparent)}
+
+/* ─── BUTTONS ───────────────────────────────────────────────── */
+.btn{
+  font-family:var(--font-head);
+  font-size:11px;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  padding:11px 26px;
+  border-radius:6px;
+  cursor:pointer;
+  transition:all .25s;
+  border:none;
+  display:inline-flex;align-items:center;gap:8px;
+}
+.btn-primary{
+  background:linear-gradient(135deg,var(--accent)33,var(--teal2)33);
+  border:1.5px solid var(--accent);
+  color:var(--accent);
+  box-shadow:0 0 18px var(--accent)30;
+}
+.btn-primary:hover{background:linear-gradient(135deg,var(--accent)55,var(--teal)33);box-shadow:0 0 30px var(--accent)55;transform:translateY(-2px)}
+.btn-danger{
+  background:linear-gradient(135deg,var(--danger)22,var(--danger)11);
+  border:1.5px solid var(--danger);
+  color:var(--danger);
+}
+.btn-danger:hover{background:linear-gradient(135deg,var(--danger)44,var(--danger)22);box-shadow:0 0 18px var(--danger)44}
+.btn-danger:disabled{opacity:.4;cursor:not-allowed}
+.btn-tab{
+  background:transparent;
+  border:1px solid var(--border);
+  color:var(--muted);
+  padding:7px 15px;
+  border-radius:5px;
+  font-family:var(--font-head);
+  font-size:9px;
+  letter-spacing:1.5px;
+  text-transform:uppercase;
+  cursor:pointer;
+  transition:all .2s;
+}
+.btn-tab:hover{border-color:var(--accent);color:var(--accent)}
+.btn-tab.active{background:var(--accent)1a;border-color:var(--accent);color:var(--accent);box-shadow:0 0 10px var(--accent)33}
+
+/* ─── SLIDERS ───────────────────────────────────────────────── */
+input[type=range]{
+  -webkit-appearance:none;width:100%;height:4px;
+  background:var(--border);border-radius:2px;outline:none;cursor:pointer;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:14px;height:14px;border-radius:50%;
+  background:var(--accent);box-shadow:0 0 8px var(--accent)88;cursor:pointer;
+}
+.slider-wrap{margin-bottom:13px}
+.slider-row{display:flex;justify-content:space-between;margin-bottom:4px}
+.slider-label{font-size:10px;color:var(--muted);letter-spacing:.8px}
+.slider-val{font-family:var(--font-mono);font-size:12px;color:var(--accent)}
+
+/* ─── NAV ───────────────────────────────────────────────────── */
+#navbar{
+  position:sticky;top:0;z-index:200;
+  background:var(--bg)ee;
+  backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:4px;
+  padding:8px 20px;
+  overflow-x:auto;
+}
+.nav-logo{
+  display:flex;align-items:center;gap:10px;
+  margin-right:16px;flex-shrink:0;
+}
+.nav-logo span{
+  font-family:var(--font-head);
+  color:var(--accent);font-size:13px;letter-spacing:3px;
+}
+.nav-link{
+  background:none;border:none;
+  color:var(--muted);cursor:pointer;
+  font-family:var(--font-head);font-size:9px;
+  letter-spacing:1.5px;text-transform:uppercase;
+  padding:7px 13px;border-radius:4px;
+  transition:all .2s;white-space:nowrap;
+}
+.nav-link:hover{color:var(--accent);background:var(--accent)11}
+.nav-link.active{color:var(--accent);background:var(--accent)1a}
+.nav-right{margin-left:auto;flex-shrink:0}
+
+/* ─── SECTIONS ──────────────────────────────────────────────── */
+.section{display:none;max-width:1180px;margin:0 auto;padding:40px 20px}
+.section.active{display:block}
+.section-header{display:flex;align-items:center;gap:14px;margin-bottom:28px}
+.section-header h2{
+  font-family:var(--font-head);
+  color:var(--mist);font-size:22px;letter-spacing:3px;
+}
+.section-header .line{flex:1;height:1px;background:linear-gradient(90deg,var(--accent)55,transparent)}
+
+/* ─── HERO ──────────────────────────────────────────────────── */
+#hero{
+  min-height:100vh;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  position:relative;overflow:hidden;
+  background:radial-gradient(ellipse at 50% 65%,#1a3a5c 0%,var(--bg) 70%);
+}
+.hero-stars{position:absolute;inset:0;pointer-events:none}
+.star{
+  position:absolute;border-radius:50%;background:var(--mist);
+  animation:pulsing var(--d,3s) step-end infinite;
+  animation-delay:var(--delay,0s);
+}
+.hero-grid{
+  position:absolute;inset:0;
+  background-image:linear-gradient(var(--border)22 1px,transparent 1px),
+                   linear-gradient(90deg,var(--border)22 1px,transparent 1px);
+  background-size:70px 70px;
+}
+.hero-waves{position:absolute;bottom:0;left:0;right:0;height:260px;overflow:hidden}
+.hero-wave{
+  position:absolute;bottom:0;left:-50%;
+  width:200%;height:100%;
+  border-radius:40% 40% 0 0;
+  animation:waveScroll var(--spd,4s) linear infinite;
+  animation-direction:var(--dir,normal);
+}
+.hero-content{position:relative;z-index:10;text-align:center;padding:40px 24px;animation:fadeUp .9s ease both}
+.hero-eyebrow{
+  font-family:var(--font-mono);font-size:10px;letter-spacing:5px;
+  color:var(--muted);margin-bottom:12px;
+}
+.hero-title{
+  font-family:var(--font-head);
+  font-size:clamp(36px,7vw,80px);font-weight:700;
+  background:linear-gradient(160deg,var(--mist),var(--accent),var(--teal));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  letter-spacing:5px;line-height:1.05;margin-bottom:10px;
+}
+.hero-sub{
+  font-size:15px;color:var(--text);max-width:560px;
+  margin:0 auto 36px;line-height:1.8;
+}
+.hero-sub em{color:var(--accent);font-style:normal}
+.hero-sub b{color:var(--teal);font-weight:600}
+.hero-stats{display:flex;gap:36px;justify-content:center;margin-top:48px;flex-wrap:wrap}
+.hero-stat{text-align:center}
+.hero-stat-val{font-family:var(--font-head);color:var(--accent);font-size:20px;font-weight:700}
+.hero-stat-label{font-size:9px;color:var(--muted);letter-spacing:2px;margin-top:2px}
+
+/* ─── RADAR ─────────────────────────────────────────────────── */
+.radar-wrap{position:relative;display:inline-block}
+.radar-ring{
+  position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  border-radius:50%;border:1px solid var(--accent);
+  animation:ringOut var(--dur,2s) ease-out infinite;
+  animation-delay:var(--delay,0s);
+  width:10px;height:10px;
+}
+.radar-sweep{
+  position:absolute;top:50%;left:50%;
+  width:2px;height:42%;
+  background:linear-gradient(0deg,var(--accent)99,transparent);
+  transform-origin:0% 0%;
+  animation:radarSpin 3s linear infinite;
+}
+
+/* ─── SIM AREA ──────────────────────────────────────────────── */
+#sim-canvas{
+  position:relative;
+  height:380px;
+  background:linear-gradient(180deg,#0a1f35 0%,#0f2d4a 30%,#133558 60%,#0a1e33 100%);
+  border-radius:10px;
+  overflow:hidden;
+  border:1px solid var(--border);
+}
+.canvas-grid{
+  position:absolute;inset:0;
+  background-image:linear-gradient(var(--border)33 1px,transparent 1px),
+                   linear-gradient(90deg,var(--border)33 1px,transparent 1px);
+  background-size:50px 50px;opacity:.4;
+}
+.ocean-surface{
+  position:absolute;top:110px;left:0;right:0;height:22px;
+  background:linear-gradient(90deg,
+    var(--teal2)00 0%,
+    var(--teal2)44 20%,
+    var(--teal)66 50%,
+    var(--teal2)44 80%,
+    var(--teal2)00 100%);
+  background-size:240px 100%;
+  animation:waveScroll 2.5s linear infinite;
+}
+.seafloor{
+  position:absolute;bottom:0;left:0;right:0;height:90px;
+  background:linear-gradient(180deg,transparent,#1a0e06cc);
+  border-top:2px dashed var(--border)88;
+}
+.epicentre{position:absolute;left:14%;bottom:32%;transform:translate(-50%,50%)}
+.epicentre-icon{
+  width:36px;height:36px;position:relative;
+  display:flex;align-items:center;justify-content:center;
+}
+.seismic-wave-anim{
+  position:absolute;
+  bottom:38%;
+  width:28px;height:28px;border-radius:50%;
+  background:radial-gradient(circle,var(--accent)99,transparent);
+  border:2px solid var(--accent);
+  box-shadow:0 0 16px var(--accent)99;
+  transform:translateX(-50%);
+  display:none;
+  transition:left .06s linear;
+}
+.tsunami-wave-anim{
+  position:absolute;top:88px;
+  width:52px;height:64px;
+  transform:translateX(-50%);
+  display:none;
+  transition:left .06s linear;
+}
+.sensor-node{
+  position:absolute;bottom:30%;transform:translate(-50%,50%);
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+}
+.sensor-box{
+  width:18px;height:18px;border-radius:3px;
+  border:1.5px solid var(--muted);
+  background:var(--border)88;
+  display:flex;align-items:center;justify-content:center;
+  font-size:8px;color:var(--muted);
+  transition:all .3s;
+}
+.sensor-box.active{
+  border-color:var(--accent);color:var(--accent);
+  background:var(--accent)22;
+  box-shadow:0 0 12px var(--accent)88;
+}
+.buoy-node{
+  position:absolute;top:96px;transform:translateX(-50%);
+  display:flex;flex-direction:column;align-items:center;
+  animation:bobFloat 3s ease-in-out infinite;
+}
+.buoy-node:nth-child(2){animation-delay:.5s}
+.buoy-body{transition:all .3s}
+.buoy-body.active{filter:drop-shadow(0 0 8px var(--teal))}
+.island-wrap{position:absolute;right:6%;top:72px}
+.wavara-label{
+  font-family:var(--font-head);font-size:8px;
+  color:var(--green);text-align:center;letter-spacing:2px;margin-top:4px;
+}
+.warning-banner{
+  position:absolute;top:0;left:0;right:0;
+  background:linear-gradient(90deg,var(--danger)22,var(--danger)11);
+  border-bottom:1px solid var(--danger)88;
+  padding:8px 16px;text-align:center;
+  font-family:var(--font-head);font-size:11px;
+  color:var(--danger);letter-spacing:2px;
+  display:none;
+}
+.warning-banner.show{display:block;animation:blink .9s step-end infinite}
+.sim-progress-bar{
+  position:absolute;bottom:0;left:0;right:0;height:3px;
+  background:var(--border);display:none;
+}
+.sim-progress-fill{
+  height:100%;
+  background:linear-gradient(90deg,var(--accent),var(--teal));
+  width:0%;transition:width .1s linear;
+}
+.view-label{
+  position:absolute;top:12px;left:16px;
+  font-family:var(--font-mono);font-size:9px;color:var(--muted);letter-spacing:2px;
+}
+
+/* ─── DATA ROWS ─────────────────────────────────────────────── */
+.data-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:8px 0;border-bottom:1px solid var(--border);
+}
+.data-row:last-child{border-bottom:none}
+.data-label{font-size:10px;color:var(--muted);letter-spacing:.8px}
+.data-value{font-family:var(--font-mono);font-size:14px;color:var(--accent)}
+.data-unit{font-size:9px;color:var(--muted);margin-left:2px}
+
+/* ─── THREAT METER ──────────────────────────────────────────── */
+.threat-track{height:8px;background:var(--border);border-radius:4px;overflow:hidden;margin:6px 0}
+.threat-fill{height:100%;border-radius:4px;transition:width .5s ease,background .5s ease}
+.threat-ticks{display:flex;justify-content:space-between}
+.threat-tick{font-size:7px;color:var(--muted);letter-spacing:.3px}
+
+/* ─── SENSOR STATUS ─────────────────────────────────────────── */
+.sensor-status{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:6px 0;border-bottom:1px solid var(--border);
+}
+.sensor-status:last-child{border-bottom:none}
+.sensor-name{font-size:9px;color:var(--muted);letter-spacing:.8px}
+.sensor-state{
+  font-family:var(--font-mono);font-size:9px;
+  color:var(--border);transition:all .3s;
+}
+.sensor-state.on{color:var(--accent);text-shadow:0 0 8px var(--accent)}
+.sensor-state.on.teal{color:var(--teal);text-shadow:0 0 8px var(--teal)}
+.sensor-state.on.danger{color:var(--danger);text-shadow:0 0 8px var(--danger)}
+
+/* ─── WAVE SVG ──────────────────────────────────────────────── */
+.wave-svg{width:100%;overflow:visible}
+
+/* ─── CONCEPT CARDS ─────────────────────────────────────────── */
+.concept-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.concept-card{
+  padding:12px;border-radius:8px;
+  border:1px solid var(--border);
+  background:var(--bg2);cursor:pointer;
+  transition:all .25s;
+}
+.concept-card:hover{transform:translateY(-2px)}
+.concept-title{font-size:10px;margin-bottom:6px;font-family:var(--font-head);letter-spacing:1px}
+.concept-desc{font-size:11px;color:var(--text);line-height:1.6;display:none}
+.concept-hint{font-size:10px;color:var(--muted)}
+.concept-card:hover .concept-desc{display:block;animation:fadeUp .2s ease}
+.concept-card:hover .concept-hint{display:none}
+
+/* ─── EQUATION BOX ──────────────────────────────────────────── */
+.eq-big{
+  font-family:var(--font-head);font-size:44px;font-weight:700;
+  background:linear-gradient(135deg,var(--mist),var(--accent));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  text-align:center;padding:20px 0;
+}
+.eq-result-box{
+  padding:10px 18px;background:var(--bg);border-radius:6px;
+  border:1px solid var(--border);min-width:150px;text-align:center;
+}
+.eq-result-label{font-size:9px;color:var(--muted);letter-spacing:1px;margin-bottom:4px}
+.eq-result-val{font-family:var(--font-mono);font-size:18px;font-weight:700}
+
+/* ─── COMPARISON ────────────────────────────────────────────── */
+.compare-bar-wrap{margin-bottom:10px}
+.compare-bar-track{height:12px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:3px}
+.compare-bar-fill{height:100%;border-radius:3px;transition:width .5s ease}
+
+/* ─── RADAR CHART ───────────────────────────────────────────── */
+.radar-svg{width:100%;max-width:300px;display:block;margin:0 auto}
+
+/* ─── GRAPH ─────────────────────────────────────────────────── */
+.graph-svg{width:100%;overflow:visible}
+.graph-bg{
+  background-image:linear-gradient(var(--border)55 1px,transparent 1px),
+                   linear-gradient(90deg,var(--border)55 1px,transparent 1px);
+  background-size:40px 40px;
+}
+
+/* ─── SAFETY ────────────────────────────────────────────────── */
+.safety-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.safety-card{
+  padding:20px 16px;border-radius:10px;text-align:center;
+  border:1px solid var(--border);background:var(--bg2);
+}
+.safety-icon{font-size:36px;margin-bottom:10px;display:block}
+.safety-step{
+  font-family:var(--font-mono);font-size:9px;color:var(--muted);
+  letter-spacing:2px;margin-bottom:6px;
+}
+.safety-title{font-family:var(--font-head);font-size:13px;color:var(--mist);margin-bottom:8px}
+.safety-desc{font-size:11px;color:var(--muted);line-height:1.7}
+
+/* ─── LOADING ───────────────────────────────────────────────── */
+#loading{
+  position:fixed;inset:0;background:var(--bg);z-index:9999;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:24px;
+}
+.loading-title{
+  font-family:var(--font-head);font-size:28px;font-weight:700;
+  color:var(--accent);letter-spacing:5px;text-align:center;
+}
+.loading-sub{font-family:var(--font-mono);font-size:10px;color:var(--muted);letter-spacing:4px}
+.loading-bar-track{width:320px;height:4px;background:var(--border);border-radius:2px;overflow:hidden}
+.loading-bar-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--teal));animation:loadBar 2.8s ease-in-out forwards}
+.loading-phase{font-family:var(--font-mono);font-size:10px;color:var(--accent);letter-spacing:2px;min-height:20px;text-align:center}
+.loading-spinner{
+  width:80px;height:80px;border-radius:50%;
+  border:2px solid var(--border);
+  border-top-color:var(--accent);
+  animation:spin360 1s linear infinite;
+}
+
+/* ─── ALERT BOX ─────────────────────────────────────────────── */
+.alert-emergency{
+  background:linear-gradient(135deg,var(--danger)15,var(--danger)08);
+  border:1.5px solid var(--danger)88;border-radius:10px;
+  padding:18px;display:none;
+}
+.alert-emergency.show{display:block}
+.alert-title{
+  font-family:var(--font-head);color:var(--danger);
+  font-size:13px;letter-spacing:2px;text-align:center;
+  margin-bottom:8px;animation:blink .9s step-end infinite;
+}
+
+/* ─── GRID LAYOUTS ──────────────────────────────────────────── */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.grid-sim{display:grid;grid-template-columns:1fr 310px;gap:16px}
+
+/* ─── FOOTER ────────────────────────────────────────────────── */
+footer{
+  border-top:1px solid var(--border);
+  padding:20px;text-align:center;
+  background:var(--bg2);margin-top:40px;
+}
+footer p{font-size:10px;color:var(--muted);letter-spacing:1.5px}
+
+/* ─── LIGHT MODE ────────────────────────────────────────────── */
+body.light{
+  --bg:#e8f2fb;--bg2:#d8eaf7;--panel:#cfe0f0;
+  --border:#a8c4df;--border2:#7aa8cc;
+  --text:#1a3a5c;--muted:#4a7096;
+}
+</style>
+</head>
+<body>
+
+<!-- ════ LOADING SCREEN ════════════════════════════════════════ -->
+<div id="loading">
+  <div class="loading-spinner"></div>
+  <div>
+    <div class="loading-title">WAVEGUARD</div>
+    <div class="loading-sub">Tsunami Early Warning Network</div>
+  </div>
+  <div class="loading-bar-track"><div class="loading-bar-fill"></div></div>
+  <div class="loading-phase" id="load-phase">Initialising system…</div>
+</div>
+
+<!-- ════ NAVBAR ════════════════════════════════════════════════ -->
+<nav id="navbar" style="display:none">
+  <div class="nav-logo">
+    <svg width="28" height="28" viewBox="0 0 28 28">
+      <circle cx="14" cy="14" r="12" fill="none" stroke="var(--accent)" stroke-width="1"/>
+      <circle cx="14" cy="14" r="7" fill="none" stroke="var(--accent)" stroke-width="1" opacity=".5"/>
+      <circle cx="14" cy="14" r="3" fill="var(--accent)"/>
+      <line x1="14" y1="14" x2="14" y2="3" stroke="var(--accent)" stroke-width="1.5"
+        style="transform-origin:14px 14px;animation:radarSpin 3s linear infinite"/>
+    </svg>
+    <span>WAVEGUARD</span>
+  </div>
+  <button class="nav-link active" onclick="showSection('home')">Home</button>
+  <button class="nav-link" onclick="showSection('simulation')">Simulation</button>
+  <button class="nav-link" onclick="showSection('wave')">Wave Science</button>
+  <button class="nav-link" onclick="showSection('equation')">v = fλ</button>
+  <button class="nav-link" onclick="showSection('comparison')">Comparison</button>
+  <button class="nav-link" onclick="showSection('graphs')">Graphs</button>
+  <button class="nav-link" onclick="showSection('safety')">Public Safety</button>
+  <div class="nav-right">
+    <button class="btn-tab" onclick="toggleLight()">☀ Light</button>
+  </div>
+</nav>
+
+<!-- ════════════════════════════════════════════════════════════
+     HOME
+════════════════════════════════════════════════════════════ -->
+<section id="sec-home" class="section active" style="max-width:100%;padding:0">
+<div id="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-stars" id="stars"></div>
+
+  <!-- Ocean waves -->
+  <div class="hero-waves">
+    <div class="hero-wave" style="background:linear-gradient(180deg,transparent,#0f3a5566);--spd:6s;--dir:normal;opacity:.6"></div>
+    <div class="hero-wave" style="background:linear-gradient(180deg,transparent,#1a4d7044);--spd:9s;--dir:reverse;opacity:.4;bottom:0px"></div>
+    <div class="hero-wave" style="background:linear-gradient(180deg,transparent,#0d2e4488);--spd:7s;--dir:normal;opacity:.8;height:60%"></div>
+  </div>
+
+  <div class="hero-content">
+    <div class="hero-eyebrow">Early Warning Network — Est. 2024</div>
+
+    <div style="display:flex;align-items:center;justify-content:center;gap:24px;margin-bottom:16px">
+      <!-- Radar left -->
+      <div class="radar-wrap" style="width:64px;height:64px">
+        <svg width="64" height="64" viewBox="0 0 64 64">
+          <circle cx="32" cy="32" r="30" fill="none" stroke="var(--accent)" stroke-width="1" opacity=".3"/>
+          <circle cx="32" cy="32" r="18" fill="none" stroke="var(--accent)" stroke-width="1" opacity=".2"/>
+          <circle cx="32" cy="32" r="5" fill="var(--accent)" opacity=".9"/>
+          <line x1="32" y1="32" x2="32" y2="4" stroke="var(--accent)" stroke-width="1.5" opacity=".8"
+            style="transform-origin:32px 32px;animation:radarSpin 3s linear infinite"/>
+        </svg>
+        <div class="radar-ring" style="--dur:2s;--delay:0s"></div>
+        <div class="radar-ring" style="--dur:2s;--delay:.7s"></div>
+      </div>
+
+      <h1 class="hero-title">OPERATION<br>WAVEGUARD</h1>
+
+      <!-- Radar right -->
+      <div class="radar-wrap" style="width:64px;height:64px">
+        <svg width="64" height="64" viewBox="0 0 64 64">
+          <circle cx="32" cy="32" r="30" fill="none" stroke="var(--teal)" stroke-width="1" opacity=".3"/>
+          <circle cx="32" cy="32" r="18" fill="none" stroke="var(--teal)" stroke-width="1" opacity=".2"/>
+          <circle cx="32" cy="32" r="5" fill="var(--teal)" opacity=".9"/>
+          <line x1="32" y1="32" x2="32" y2="4" stroke="var(--teal)" stroke-width="1.5" opacity=".8"
+            style="transform-origin:32px 32px;animation:radarSpin 4s linear infinite reverse"/>
+        </svg>
+      </div>
+    </div>
+
+    <p class="hero-sub">
+      A <em>hybrid tsunami early-warning system</em> combining
+      underground <b>seismic sensors</b> and ocean <b>pressure buoys</b>
+      to protect coastal communities with maximum speed and reliability.
+    </p>
+
+    <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="showSection('simulation')">▶ Launch Simulation</button>
+      <button class="btn btn-tab" onclick="showSection('wave')" style="padding:11px 22px;font-size:10px">📚 Wave Science</button>
+    </div>
+
+    <div class="hero-stats">
+      <div class="hero-stat"><div class="hero-stat-val">&lt; 2 MIN</div><div class="hero-stat-label">Seismic Detection</div></div>
+      <div class="hero-stat"><div class="hero-stat-val">HYBRID</div><div class="hero-stat-label">System Type</div></div>
+      <div class="hero-stat"><div class="hero-stat-val">98.7%</div><div class="hero-stat-label">Reliability</div></div>
+      <div class="hero-stat"><div class="hero-stat-val">15+ MIN</div><div class="hero-stat-label">Warning Advantage</div></div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════
+     SIMULATION
+════════════════════════════════════════════════════════════ -->
+<section id="sec-simulation" class="section">
+<div class="section-header">
+  <span style="font-size:22px">🌊</span>
+  <h2>Hybrid System Simulation</h2>
+  <div class="line"></div>
+</div>
+
+<!-- View mode tabs -->
+<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
+  <button class="btn-tab active" id="vt-surface" onclick="setView('surface')">Surface</button>
+  <button class="btn-tab" id="vt-underground" onclick="setView('underground')">Underground</button>
+  <button class="btn-tab" id="vt-satellite" onclick="setView('satellite')">Satellite</button>
+  <button class="btn-tab" id="vt-crosssection" onclick="setView('crosssection')">Cross-Section</button>
+  <button class="btn-tab" id="vt-dashboard" onclick="setView('dashboard')">Dashboard</button>
+  <div style="flex:1"></div>
+  <button class="btn btn-danger" id="btn-quake" onclick="startSim()">⚡ Start Earthquake</button>
+  <button class="btn-tab" onclick="resetSim()" style="padding:7px 14px">↺ Reset</button>
+</div>
+
+<div class="grid-sim">
+  <!-- Canvas -->
+  <div>
+    <!-- SURFACE / CROSS-SECTION view -->
+    <div id="sim-canvas">
+      <div class="canvas-grid"></div>
+      <div class="ocean-surface" id="ocean-surface"></div>
+      <div class="seafloor" id="seafloor"></div>
+
+      <!-- Epicentre -->
+      <div class="epicentre">
+        <svg width="42" height="42" viewBox="0 0 42 42">
+          <polygon points="21,4 38,38 4,38" fill="none" stroke="var(--danger)" stroke-width="1.5"/>
+          <text x="21" y="30" text-anchor="middle" fill="var(--danger)" font-size="15" font-family="monospace">!</text>
+          <circle cx="21" cy="21" r="0" fill="none" stroke="var(--danger)" stroke-width="2" id="eq-ring1"
+            style="animation:none"/>
+          <circle cx="21" cy="21" r="0" fill="none" stroke="var(--danger)" stroke-width="1" id="eq-ring2"
+            style="animation:none"/>
+        </svg>
+        <div style="font-size:7px;color:var(--danger);text-align:center;letter-spacing:1px;margin-top:-6px">EPICENTRE</div>
+      </div>
+
+      <!-- Seismic wave dot -->
+      <div class="seismic-wave-anim" id="seismic-dot" style="left:14%">
+        <div style="width:100%;height:100%"></div>
+      </div>
+
+      <!-- Tsunami wave SVG -->
+      <div class="tsunami-wave-anim" id="tsunami-dot" style="left:14%">
+        <svg width="52" height="64" viewBox="0 0 52 64">
+          <path d="M0,52 Q13,18 26,34 Q39,50 52,22 L52,64 L0,64 Z" fill="var(--teal)55" stroke="var(--teal)" stroke-width="1.5"/>
+        </svg>
+        <div style="font-size:7px;color:var(--teal);text-align:center;letter-spacing:1px">TSUNAMI</div>
+      </div>
+
+      <!-- Seismic sensors -->
+      <div class="sensor-node" id="sensor1" style="left:37%">
+        <div class="sensor-box" id="sbox1">▲</div>
+        <div style="font-size:7px;color:var(--muted);letter-spacing:1px" id="slbl1">S1</div>
+      </div>
+      <div class="sensor-node" id="sensor2" style="left:52%">
+        <div class="sensor-box" id="sbox2">▲</div>
+        <div style="font-size:7px;color:var(--muted);letter-spacing:1px" id="slbl2">S2</div>
+      </div>
+
+      <!-- Buoys -->
+      <div class="buoy-node" style="left:44%">
+        <svg class="buoy-body" id="buoy1" width="24" height="32" viewBox="0 0 24 32">
+          <ellipse cx="12" cy="10" rx="8" ry="5" fill="var(--border)88" stroke="var(--muted)" stroke-width="1.5"/>
+          <line x1="12" y1="15" x2="12" y2="28" stroke="var(--muted)" stroke-width="1"/>
+          <circle cx="12" cy="28" r="3" fill="var(--border)"/>
+        </svg>
+        <div style="font-size:7px;color:var(--muted);letter-spacing:1px" id="blbl1">B1</div>
+      </div>
+      <div class="buoy-node" style="left:59%;animation-delay:.5s">
+        <svg class="buoy-body" id="buoy2" width="24" height="32" viewBox="0 0 24 32">
+          <ellipse cx="12" cy="10" rx="8" ry="5" fill="var(--border)88" stroke="var(--muted)" stroke-width="1.5"/>
+          <line x1="12" y1="15" x2="12" y2="28" stroke="var(--muted)" stroke-width="1"/>
+          <circle cx="12" cy="28" r="3" fill="var(--border)"/>
+        </svg>
+        <div style="font-size:7px;color:var(--muted);letter-spacing:1px" id="blbl2">B2</div>
+      </div>
+
+      <!-- Island -->
+      <div class="island-wrap" id="island-wrap">
+        <svg width="86" height="110" viewBox="0 0 86 110">
+          <ellipse cx="43" cy="90" rx="40" ry="18" fill="#1a3a1a" stroke="#2a5a2a" stroke-width="1"/>
+          <ellipse cx="43" cy="72" rx="30" ry="24" fill="#1e4a1e" stroke="#2a5a2a" stroke-width="1"/>
+          <polygon points="33,48 43,10 53,48" fill="#2a6a2a" stroke="#3a7a3a" stroke-width="1"/>
+          <rect x="38" y="36" width="10" height="16" fill="#8b4513" opacity=".8"/>
+          <rect id="bld1" x="20" y="68" width="7" height="9" fill="var(--panel)" opacity=".9"/>
+          <rect id="bld2" x="54" y="62" width="7" height="9" fill="var(--panel)" opacity=".9"/>
+          <rect id="bld3" x="37" y="74" width="7" height="8" fill="var(--panel)" opacity=".9"/>
+          <text id="alert-icon" x="43" y="108" text-anchor="middle" fill="var(--danger)" font-size="9" font-family="monospace" style="display:none">⚠ ALERT</text>
+        </svg>
+        <div class="wavara-label">WAVARA</div>
+      </div>
+
+      <!-- Satellite radar -->
+      <div style="position:absolute;right:8%;bottom:16px">
+        <div style="width:68px;height:50px;border-radius:5px;
+          border:1.5px solid var(--border);background:var(--panel);
+          display:flex;flex-direction:column;align-items:center;justify-content:center;
+          transition:all .3s" id="ctrl-ctr">
+          <span style="font-size:18px">🖥️</span>
+          <span style="font-size:7px;color:var(--muted);letter-spacing:1px">CTRL-CTR</span>
+        </div>
+      </div>
+
+      <!-- Warning banner -->
+      <div class="warning-banner" id="warning-banner">⚠ TSUNAMI WARNING ISSUED FOR WAVARA ⚠</div>
+
+      <!-- Progress bar -->
+      <div class="sim-progress-bar" id="sim-prog-bar">
+        <div class="sim-progress-fill" id="sim-prog-fill"></div>
+      </div>
+
+      <div class="view-label" id="view-label">SURFACE VIEW</div>
+    </div>
+
+    <!-- DASHBOARD VIEW (hidden by default) -->
+    <div id="dashboard-view" style="display:none;height:380px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:12px;height:100%">
+        <div class="panel" id="db-seismic" style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center">
+          <div style="font-size:32px;margin-bottom:8px">📡</div>
+          <div style="font-family:var(--font-head);font-size:9px;color:var(--muted);letter-spacing:2px">SEISMIC NETWORK</div>
+          <div id="db-s-state" style="font-family:var(--font-mono);font-size:10px;color:var(--border);margin-top:6px">○ STANDBY</div>
+        </div>
+        <div class="panel" id="db-buoy" style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center">
+          <div style="font-size:32px;margin-bottom:8px">🌊</div>
+          <div style="font-family:var(--font-head);font-size:9px;color:var(--muted);letter-spacing:2px">BUOY NETWORK</div>
+          <div id="db-b-state" style="font-family:var(--font-mono);font-size:10px;color:var(--border);margin-top:6px">○ STANDBY</div>
+        </div>
+        <div class="panel" id="db-hybrid" style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center">
+          <div style="font-size:32px;margin-bottom:8px">🧠</div>
+          <div style="font-family:var(--font-head);font-size:9px;color:var(--muted);letter-spacing:2px">HYBRID AI CORE</div>
+          <div id="db-h-state" style="font-family:var(--font-mono);font-size:10px;color:var(--border);margin-top:6px">○ STANDBY</div>
+        </div>
+        <div class="panel" id="db-alert" style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center">
+          <div style="font-size:32px;margin-bottom:8px">⚠️</div>
+          <div style="font-family:var(--font-head);font-size:9px;color:var(--muted);letter-spacing:2px">ALERT BROADCAST</div>
+          <div id="db-a-state" style="font-family:var(--font-mono);font-size:10px;color:var(--border);margin-top:6px">○ STANDBY</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SATELLITE VIEW -->
+    <div id="satellite-view" style="display:none">
+      <div class="panel" style="height:380px;padding:0;position:relative;overflow:hidden;
+        background:radial-gradient(ellipse at 50% 50%,#0f2d4a,var(--bg))">
+        <svg width="100%" height="100%" viewBox="0 0 600 380">
+          <defs>
+            <pattern id="sat-grid" width="50" height="40" patternUnits="userSpaceOnUse">
+              <line x1="0" y1="0" x2="50" y2="0" stroke="var(--border)" stroke-width=".5" opacity=".3"/>
+              <line x1="0" y1="0" x2="0" y2="40" stroke="var(--border)" stroke-width=".5" opacity=".3"/>
+            </pattern>
+          </defs>
+          <rect width="600" height="380" fill="url(#sat-grid)"/>
+          <!-- Epicentre -->
+          <circle cx="100" cy="190" r="8" fill="var(--danger)" opacity=".8"/>
+          <circle cx="100" cy="190" r="0" fill="none" stroke="var(--danger)" stroke-width="2" id="sat-ring1"
+            style="animation:none"/>
+          <circle cx="100" cy="190" r="0" fill="none" stroke="var(--danger)" stroke-width="1.5" id="sat-ring2"
+            style="animation:none"/>
+          <!-- Tsunami ring top-down -->
+          <circle cx="100" cy="190" r="0" fill="none" stroke="var(--teal)" stroke-width="2" opacity=".7" id="sat-tsunami-ring"/>
+          <!-- Buoys -->
+          <circle cx="280" cy="182" r="6" fill="var(--teal)" opacity=".8"/>
+          <circle cx="360" cy="200" r="6" fill="var(--teal)" opacity=".8"/>
+          <text x="280" y="172" text-anchor="middle" fill="var(--teal)" font-size="8" font-family="monospace">B1</text>
+          <text x="360" y="190" text-anchor="middle" fill="var(--teal)" font-size="8" font-family="monospace">B2</text>
+          <!-- Island -->
+          <ellipse cx="490" cy="190" rx="44" ry="30" fill="#1e3a1e" stroke="#2a5a2a" stroke-width="1.5"/>
+          <text x="490" y="195" text-anchor="middle" fill="var(--green)" font-size="9" font-family="monospace">WAVARA</text>
+          <text id="sat-alert" x="490" y="212" text-anchor="middle" fill="var(--danger)" font-size="11" font-family="monospace" style="display:none;animation:blink .8s step-end infinite">⚠</text>
+          <!-- Epicentre label -->
+          <text x="100" y="210" text-anchor="middle" fill="var(--danger)" font-size="8" font-family="monospace">EPICENTRE</text>
+        </svg>
+        <div class="view-label">SATELLITE VIEW — TOP DOWN</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right panel -->
+  <div style="display:flex;flex-direction:column;gap:12px">
+    <!-- Live data -->
+    <div class="panel">
+      <div class="panel-title">Live Data</div>
+      <div class="data-row">
+        <span class="data-label">Seismic Detection</span>
+        <span><span class="data-value" id="d-seismic">—</span><span class="data-unit">min</span></span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">Buoy Detection</span>
+        <span><span class="data-value" id="d-buoy" style="color:var(--teal)">—</span><span class="data-unit">min</span></span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">Warning Advantage</span>
+        <span><span class="data-value" id="d-adv" style="color:var(--green)">—</span><span class="data-unit">min</span></span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">Est. Evacuation</span>
+        <span><span class="data-value" id="d-evac" style="color:var(--gold)">—</span><span class="data-unit">min</span></span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">Detection Reliability</span>
+        <span><span class="data-value" id="d-rel" style="color:var(--green)">—</span><span class="data-unit">%</span></span>
+      </div>
+      <div style="margin-top:14px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+          <span style="font-family:var(--font-head);font-size:9px;color:var(--muted);letter-spacing:1.5px">THREAT LEVEL</span>
+          <span style="font-family:var(--font-head);font-size:9px;letter-spacing:2px" id="threat-label">NOMINAL</span>
+        </div>
+        <div class="threat-track"><div class="threat-fill" id="threat-fill" style="width:5%;background:var(--green)"></div></div>
+        <div class="threat-ticks">
+          <span class="threat-tick">NOMINAL</span>
+          <span class="threat-tick">ELEVATED</span>
+          <span class="threat-tick">HIGH</span>
+          <span class="threat-tick">CRITICAL</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sensor status -->
+    <div class="panel">
+      <div class="panel-title">Sensor Network</div>
+      <div class="sensor-status">
+        <span class="sensor-name">SEISMIC #1</span>
+        <span class="sensor-state" id="ss1">○ STANDBY</span>
+      </div>
+      <div class="sensor-status">
+        <span class="sensor-name">SEISMIC #2</span>
+        <span class="sensor-state" id="ss2">○ STANDBY</span>
+      </div>
+      <div class="sensor-status">
+        <span class="sensor-name">BUOY ALPHA</span>
+        <span class="sensor-state teal" id="ss3">○ STANDBY</span>
+      </div>
+      <div class="sensor-status">
+        <span class="sensor-name">BUOY BETA</span>
+        <span class="sensor-state teal" id="ss4">○ STANDBY</span>
+      </div>
+      <div class="sensor-status">
+        <span class="sensor-name">WARNING SYSTEM</span>
+        <span class="sensor-state danger" id="ss5">○ STANDBY</span>
+      </div>
+    </div>
+
+    <!-- Emergency panel -->
+    <div class="alert-emergency" id="alert-box">
+      <div class="alert-title">⚠ TSUNAMI WARNING — WAVARA</div>
+      <div style="font-size:10px;color:var(--text);text-align:center">
+        Hybrid system advantage:<br>
+        <strong style="color:var(--green)" id="adv-display">—</strong> minutes earlier than buoy-only
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Controls -->
+<div class="grid-3" style="margin-top:16px">
+  <div class="panel">
+    <div class="panel-title">Earthquake Controls</div>
+    <div class="slider-wrap">
+      <div class="slider-row"><span class="slider-label">Magnitude</span><span class="slider-val" id="v-mag">7.2 M</span></div>
+      <input type="range" min="5" max="9" step="0.1" value="7.2" oninput="updateParam('magnitude',this.value,'v-mag',' M')">
+    </div>
+    <div class="slider-wrap">
+      <div class="slider-row"><span class="slider-label">Distance from Zone</span><span class="slider-val" id="v-dist">300 km</span></div>
+      <input type="range" min="50" max="800" step="10" value="300" oninput="updateParam('distance',this.value,'v-dist',' km')">
+    </div>
+    <div class="slider-wrap">
+      <div class="slider-row"><span class="slider-label">Seismic Wave Speed</span><span class="slider-val" id="v-seis">5 km/s</span></div>
+      <input type="range" min="3" max="8" step="0.1" value="5" oninput="updateParam('seismicSpeed',this.value,'v-seis',' km/s')">
+    </div>
+    <div style="background:var(--bg);border-radius:6px;padding:10px;border:1px solid var(--border)">
+      <div style="font-size:9px;color:var(--muted);margin-bottom:4px">Seismic formula</div>
+      <div class="mono" style="color:var(--accent);font-size:13px">v = √(E/ρ)</div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-title">Ocean Controls</div>
+    <div class="slider-wrap">
+      <div class="slider-row"><span class="slider-label">Tsunami Speed</span><span class="slider-val" id="v-tsu">700 km/h</span></div>
+      <input type="range" min="100" max="900" step="10" value="700" oninput="updateParam('tsunamiSpeed',this.value,'v-tsu',' km/h')">
+    </div>
+    <div class="slider-wrap">
+      <div class="slider-row"><span class="slider-label">Ocean Depth</span><span class="slider-val" id="v-depth">4000 m</span></div>
+      <input type="range" min="500" max="8000" step="100" value="4000" oninput="updateParam('oceanDepth',this.value,'v-depth',' m')">
+    </div>
+    <div class="slider-wrap">
+      <div class="slider-row"><span class="slider-label">Warning Threshold</span><span class="slider-val" id="v-thresh">50 %</span></div>
+      <input type="range" min="10" max="100" step="5" value="50" oninput="updateParam('warningThreshold',this.value,'v-thresh',' %')">
+    </div>
+    <div style="background:var(--bg);border-radius:6px;padding:10px;border:1px solid var(--border)">
+      <div style="font-size:9px;color:var(--muted);margin-bottom:4px">Tsunami speed formula</div>
+      <div class="mono" style="color:var(--teal);font-size:13px">v = √(g·d)</div>
+      <div style="font-size:9px;color:var(--muted);margin-top:3px" id="depth-calc">v ≈ 713 km/h at 4000m</div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-title">Sensor Controls</div>
+    <div class="slider-wrap">
+      <div class="slider-row"><span class="slider-label">Buoy Sensitivity</span><span class="slider-val" id="v-buoys">80 %</span></div>
+      <input type="range" min="10" max="100" step="1" value="80" oninput="updateParam('buoySensitivity',this.value,'v-buoys',' %')">
+    </div>
+    <div style="background:var(--bg);border-radius:8px;padding:14px;border:1px solid var(--border);margin-top:10px">
+      <div style="font-size:10px;color:var(--muted);margin-bottom:8px">Real-time Calculations</div>
+      <div class="data-row" style="padding:4px 0">
+        <span style="font-size:10px;color:var(--muted)">Seismic detect</span>
+        <span class="mono" style="font-size:12px;color:var(--accent)" id="calc-s">—</span>
+      </div>
+      <div class="data-row" style="padding:4px 0">
+        <span style="font-size:10px;color:var(--muted)">Buoy detect</span>
+        <span class="mono" style="font-size:12px;color:var(--teal)" id="calc-b">—</span>
+      </div>
+      <div class="data-row" style="padding:4px 0;border:none">
+        <span style="font-size:10px;color:var(--muted)">Advantage</span>
+        <span class="mono" style="font-size:12px;color:var(--green)" id="calc-a">—</span>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════
+     WAVE SCIENCE
+════════════════════════════════════════════════════════════ -->
+<section id="sec-wave" class="section">
+<div class="section-header">
+  <span style="font-size:22px">〰️</span>
+  <h2>Wave Science</h2>
+  <div class="line"></div>
+</div>
+
+<!-- Interactive wave diagram -->
+<div class="panel" style="margin-bottom:16px">
+  <div class="panel-title">Interactive Wave Diagram</div>
+  <div class="grid-2" style="margin-bottom:14px;gap:24px">
+    <div>
+      <div class="slider-wrap">
+        <div class="slider-row"><span class="slider-label">Frequency (f)</span><span class="slider-val" id="wf-val">1.5 Hz</span></div>
+        <input type="range" min="0.5" max="4" step="0.1" value="1.5" id="wf-slider"
+          oninput="document.getElementById('wf-val').textContent=this.value+' Hz';drawWave()">
+      </div>
+      <div class="slider-wrap">
+        <div class="slider-row"><span class="slider-label">Amplitude (A)</span><span class="slider-val" id="wa-val">32 px</span></div>
+        <input type="range" min="10" max="44" step="1" value="32" id="wa-slider"
+          oninput="document.getElementById('wa-val').textContent=this.value+' px';drawWave()">
+      </div>
+    </div>
+    <div style="background:var(--bg);border-radius:8px;padding:14px;border:1px solid var(--border)">
+      <div style="font-size:10px;color:var(--muted);margin-bottom:8px">Live Calculations</div>
+      <div class="data-row" style="padding:4px 0"><span style="font-size:10px;color:var(--muted)">Period T = 1/f</span><span class="mono" style="font-size:13px;color:var(--accent)" id="wv-period">0.67 s</span></div>
+      <div class="data-row" style="padding:4px 0"><span style="font-size:10px;color:var(--muted)">Wavelength λ</span><span class="mono" style="font-size:13px;color:var(--accent)" id="wv-lambda">depends on v</span></div>
+      <div class="data-row" style="padding:4px 0;border:none"><span style="font-size:10px;color:var(--muted)">Energy ∝ A²</span><span class="mono" style="font-size:13px;color:var(--gold)" id="wv-energy">1024</span></div>
+    </div>
+  </div>
+  <svg id="wave-svg" class="wave-svg" viewBox="0 0 600 110" style="height:110px"></svg>
+  <div class="mono" style="font-size:10px;color:var(--muted);text-align:center;margin-top:8px" id="wave-formula-line">
+    v = fλ · f = 1.5 Hz · T = 0.67 s · Energy proportional to A²
+  </div>
+</div>
+
+<!-- Concept cards -->
+<div class="concept-grid" style="margin-bottom:16px">
+  <div class="concept-card" style="border-color:var(--danger)44" onmouseover="this.style.borderColor='var(--danger)'" onmouseout="this.style.borderColor='var(--danger)44'">
+    <div class="concept-title" style="color:var(--danger)">Amplitude</div>
+    <div class="concept-hint">Hover to learn →</div>
+    <div class="concept-desc">Maximum displacement from rest position. Larger amplitude = more energy. Tsunamis have tiny amplitude in deep water but enormous amplitude near shore.</div>
+  </div>
+  <div class="concept-card" style="border-color:var(--accent)44" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--accent)44'">
+    <div class="concept-title" style="color:var(--accent)">Wavelength (λ)</div>
+    <div class="concept-hint">Hover to learn →</div>
+    <div class="concept-desc">Distance between two consecutive crests or troughs. Symbol λ (lambda). Tsunamis have wavelengths of 100–500 km — enormous compared to wind waves.</div>
+  </div>
+  <div class="concept-card" style="border-color:var(--gold)44" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--gold)44'">
+    <div class="concept-title" style="color:var(--gold)">Frequency (f)</div>
+    <div class="concept-hint">Hover to learn →</div>
+    <div class="concept-desc">Cycles per second, measured in Hertz (Hz). f = 1/T. Tsunamis are very low frequency — periods of 10 minutes to 2 hours between wave arrivals.</div>
+  </div>
+  <div class="concept-card" style="border-color:var(--green)44" onmouseover="this.style.borderColor='var(--green)'" onmouseout="this.style.borderColor='var(--green)44'">
+    <div class="concept-title" style="color:var(--green)">Time Period (T)</div>
+    <div class="concept-hint">Hover to learn →</div>
+    <div class="concept-desc">Time for one complete wave cycle. T = 1/f. The longer the period, the more slowly the wave oscillates. Key to distinguishing tsunamis from wind waves.</div>
+  </div>
+  <div class="concept-card" style="border-color:var(--teal)44" onmouseover="this.style.borderColor='var(--teal)'" onmouseout="this.style.borderColor='var(--teal)44'">
+    <div class="concept-title" style="color:var(--teal)">Transverse Waves</div>
+    <div class="concept-hint">Hover to learn →</div>
+    <div class="concept-desc">Particles oscillate perpendicular to wave direction. Examples: light waves, electromagnetic waves, water surface waves (seismic S-waves).</div>
+  </div>
+  <div class="concept-card" style="border-color:#c8a06e44" onmouseover="this.style.borderColor='#c8a06e'" onmouseout="this.style.borderColor='#c8a06e44'">
+    <div class="concept-title" style="color:#c8a06e">Longitudinal Waves</div>
+    <div class="concept-hint">Hover to learn →</div>
+    <div class="concept-desc">Particles oscillate parallel to wave direction. Examples: sound waves, seismic P-waves (Primary waves). These travel faster than S-waves through rock.</div>
+  </div>
+  <div class="concept-card" style="border-color:#9b8dc844" onmouseover="this.style.borderColor='#9b8dc8'" onmouseout="this.style.borderColor='#9b8dc844'" style="grid-column:span 2">
+    <div class="concept-title" style="color:#9b8dc8">Energy Transfer</div>
+    <div class="concept-hint">Hover to learn →</div>
+    <div class="concept-desc">Waves transfer energy without permanently moving matter. The wave pattern moves, not the water itself. A tsunami transfers earthquake energy across entire ocean basins.</div>
+  </div>
+  <div class="concept-card" style="border-color:var(--accent2)44" onmouseover="this.style.borderColor='var(--accent2)'" onmouseout="this.style.borderColor='var(--accent2)44'">
+    <div class="concept-title" style="color:var(--accent2)">Wave Speed</div>
+    <div class="concept-hint">Hover to learn →</div>
+    <div class="concept-desc">In shallow water, tsunami speed v = √(g·d). Deeper ocean → faster wave. Speed decreases near shore, causing wave height to increase dramatically (shoaling).</div>
+  </div>
+</div>
+
+<!-- Transverse & Longitudinal animated -->
+<div class="grid-2">
+  <div class="panel">
+    <div class="panel-title" style="color:var(--teal)">Transverse Wave — S-Waves / Water Surface</div>
+    <svg id="trans-svg" viewBox="0 0 520 100" style="width:100%;height:100px;overflow:visible"></svg>
+    <div class="mono" style="font-size:9px;color:var(--muted);margin-top:6px">↕ Particle motion perpendicular to direction of travel ▶</div>
+  </div>
+  <div class="panel">
+    <div class="panel-title" style="color:#c8a06e">Longitudinal Wave — P-Waves / Sound</div>
+    <svg id="long-svg" viewBox="0 0 520 100" style="width:100%;height:100px;overflow:visible"></svg>
+    <div class="mono" style="font-size:9px;color:var(--muted);margin-top:6px">↔ Particle motion parallel to direction of travel ▶ (compressions &amp; rarefactions)</div>
+  </div>
+</div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════
+     EQUATION
+════════════════════════════════════════════════════════════ -->
+<section id="sec-equation" class="section">
+<div class="section-header">
+  <span style="font-size:22px">📐</span>
+  <h2>Wave Equation Visualiser</h2>
+  <div class="line"></div>
+</div>
+
+<div class="panel">
+  <div style="display:flex;gap:24px;align-items:center;flex-wrap:wrap;margin-bottom:22px">
+    <div style="background:var(--bg);border-radius:10px;padding:20px 36px;border:1px solid var(--border);flex-shrink:0">
+      <div class="eq-big">v = fλ</div>
+    </div>
+    <div style="flex:1;min-width:220px">
+      <div class="slider-wrap">
+        <div class="slider-row"><span class="slider-label">Frequency (f)</span><span class="slider-val" id="ef-val">2 Hz</span></div>
+        <input type="range" min="0.5" max="5" step="0.1" value="2" id="eq-freq"
+          oninput="document.getElementById('ef-val').textContent=parseFloat(this.value).toFixed(1)+' Hz';updateEqWave()">
+      </div>
+      <div class="slider-wrap">
+        <div class="slider-row"><span class="slider-label">Wavelength (λ)</span><span class="slider-val" id="el-val">80 m</span></div>
+        <input type="range" min="20" max="200" step="5" value="80" id="eq-lambda"
+          oninput="document.getElementById('el-val').textContent=this.value+' m';updateEqWave()">
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div class="eq-result-box">
+        <div class="eq-result-label">Frequency</div>
+        <div class="eq-result-val" id="eq-r-f" style="color:var(--gold)">2 Hz</div>
+      </div>
+      <div class="eq-result-box">
+        <div class="eq-result-label">Wavelength</div>
+        <div class="eq-result-val" id="eq-r-l" style="color:var(--accent)">80 m</div>
+      </div>
+      <div class="eq-result-box" style="border-color:var(--green)44">
+        <div class="eq-result-label">Wave Speed</div>
+        <div class="eq-result-val" id="eq-r-v" style="color:var(--green)">160 m/s</div>
+      </div>
+    </div>
+  </div>
+  <svg id="eq-svg" viewBox="0 0 600 130" style="width:100%;height:130px;overflow:visible"></svg>
+  <div style="margin-top:14px;padding:12px 16px;background:var(--bg);border-radius:6px;border:1px solid var(--border)">
+    <div class="mono" style="font-size:12px;color:var(--text)" id="eq-formula-line">
+      v = f × λ = 2 × 80 = <strong style="color:var(--green)">160 m/s</strong>
+      &nbsp;&nbsp;·&nbsp;&nbsp; T = 1/f = 0.500 s
+      &nbsp;&nbsp;·&nbsp;&nbsp; Higher f → shorter λ for same speed
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════
+     COMPARISON
+════════════════════════════════════════════════════════════ -->
+<section id="sec-comparison" class="section">
+<div class="section-header">
+  <span style="font-size:22px">⚖️</span>
+  <h2>System Comparison</h2>
+  <div class="line"></div>
+</div>
+
+<div style="display:flex;gap:10px;margin-bottom:20px">
+  <button class="btn-tab" id="ct-seismic" onclick="setCompare('seismic')">System A — Seismic Only</button>
+  <button class="btn-tab" id="ct-buoy" onclick="setCompare('buoy')">System B — Buoy Only</button>
+  <button class="btn-tab active" id="ct-hybrid" onclick="setCompare('hybrid')">Hybrid — WaveGuard</button>
+</div>
+
+<div class="grid-2">
+  <div class="panel" id="compare-detail">
+    <!-- filled by JS -->
+  </div>
+  <div class="panel">
+    <div class="panel-title">All Systems — Radar Chart</div>
+    <svg class="radar-svg" id="radar-svg" viewBox="0 0 300 290"></svg>
+  </div>
+</div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════
+     GRAPHS
+════════════════════════════════════════════════════════════ -->
+<section id="sec-graphs" class="section">
+<div class="section-header">
+  <span style="font-size:22px">📊</span>
+  <h2>Live Data Graphs</h2>
+  <div class="line"></div>
+</div>
+
+<div class="grid-3" style="margin-bottom:16px">
+  <div class="panel">
+    <div class="panel-title">Tsunami Speed vs Ocean Depth</div>
+    <svg id="depth-graph" viewBox="0 0 260 170" style="width:100%;height:170px;overflow:visible"></svg>
+    <div class="mono" style="font-size:10px;color:var(--accent);text-align:center;margin-top:4px" id="depth-graph-label">Current: 4000m → 713 km/h</div>
+  </div>
+  <div class="panel">
+    <div class="panel-title">Warning Time Advantage</div>
+    <div style="margin-top:8px" id="warning-bars"></div>
+    <div style="font-size:10px;color:var(--muted);text-align:center;margin-top:12px">Effective evacuation rate at current parameters</div>
+  </div>
+  <div class="panel">
+    <div class="panel-title">Signal Travel Speed</div>
+    <svg id="speed-graph" viewBox="0 0 260 170" style="width:100%;height:170px;overflow:visible"></svg>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-title">Adjust Parameters</div>
+  <div class="grid-3">
+    <div class="slider-wrap">
+      <div class="slider-row"><span class="slider-label">Magnitude</span><span class="slider-val" id="gv-mag">7.2 M</span></div>
+      <input type="range" min="5" max="9" step="0.1" value="7.2" oninput="updateParam('magnitude',this.value,'gv-mag',' M');drawGraphs()">
+    </div>
+    <div class="slider-wrap">
+      <div class="slider-row"><span class="slider-label">Ocean Depth</span><span class="slider-val" id="gv-depth">4000 m</span></div>
+      <input type="range" min="500" max="8000" step="100" value="4000" oninput="updateParam('oceanDepth',this.value,'gv-depth',' m');drawGraphs()">
+    </div>
+    <div class="slider-wrap">
+      <div class="slider-row"><span class="slider-label">Seismic Speed</span><span class="slider-val" id="gv-seis">5 km/s</span></div>
+      <input type="range" min="3" max="8" step="0.1" value="5" oninput="updateParam('seismicSpeed',this.value,'gv-seis',' km/s');drawGraphs()">
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════
+     PUBLIC SAFETY
+════════════════════════════════════════════════════════════ -->
+<section id="sec-safety" class="section">
+<div class="section-header">
+  <span style="font-size:22px">🏃</span>
+  <h2>Public Safety Information</h2>
+  <div class="line"></div>
+</div>
+
+<div style="padding:20px 24px;margin-bottom:20px;background:linear-gradient(135deg,var(--danger)12,var(--gold)08);
+  border:1.5px solid var(--danger)55;border-radius:10px;display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+  <div style="font-size:48px">⚠️</div>
+  <div>
+    <div style="font-family:var(--font-head);color:var(--danger);font-size:15px;letter-spacing:2px;margin-bottom:8px">PUBLIC TSUNAMI SAFETY GUIDE</div>
+    <div style="font-size:13px;color:var(--text);max-width:600px;line-height:1.8">
+      If you receive a tsunami warning, you have minutes to act. Every second counts.
+      This guide uses the same science behind WaveGuard's hybrid detection system.
+    </div>
+  </div>
+</div>
+
+<div class="safety-grid" style="margin-bottom:20px">
+  <div class="safety-card">
+    <span class="safety-icon">📻</span>
+    <div class="safety-step">Step 1</div>
+    <div class="safety-title">Hear the Alert</div>
+    <div class="safety-desc">Listen for official warnings via radio, TV, sirens, or mobile alerts. Do not wait to see the wave — it may be too late by then.</div>
+  </div>
+  <div class="safety-card">
+    <span class="safety-icon">🏃</span>
+    <div class="safety-step">Step 2</div>
+    <div class="safety-title">Move Immediately</div>
+    <div class="safety-desc">Go to high ground or inland. Move at least 1 mile from the coast or to a height of 30+ metres above sea level.</div>
+  </div>
+  <div class="safety-card">
+    <span class="safety-icon">🗺️</span>
+    <div class="safety-step">Step 3</div>
+    <div class="safety-title">Follow Evacuation Routes</div>
+    <div class="safety-desc">Use designated evacuation routes. Avoid bridges and low-lying roads near water. Do not take shortcuts through unfamiliar areas.</div>
+  </div>
+  <div class="safety-card">
+    <span class="safety-icon">📱</span>
+    <div class="safety-step">Step 4</div>
+    <div class="safety-title">Stay Informed</div>
+    <div class="safety-desc">Monitor official emergency channels. A tsunami can have multiple waves — the first may not be the largest. Stay updated.</div>
+  </div>
+  <div class="safety-card">
+    <span class="safety-icon">⏳</span>
+    <div class="safety-step">Step 5</div>
+    <div class="safety-title">Wait for All-Clear</div>
+    <div class="safety-desc">Do NOT return until authorities issue the official all-clear. The danger can last several hours after the first wave.</div>
+  </div>
+  <div class="safety-card">
+    <span class="safety-icon">🤝</span>
+    <div class="safety-step">Step 6</div>
+    <div class="safety-title">Help Others</div>
+    <div class="safety-desc">Help neighbours, especially elderly or disabled people. Alert others only if you can do so safely without delaying your own evacuation.</div>
+  </div>
+</div>
+
+<!-- Sample alert -->
+<div class="panel" style="border-color:var(--gold)55;background:var(--gold)08">
+  <div class="panel-title" style="color:var(--gold)">Example Emergency Alert</div>
+  <div style="background:var(--bg);border-radius:6px;padding:18px;border:1px solid var(--gold)33;font-family:var(--font-mono)">
+    <div style="color:var(--gold);font-size:13px;margin-bottom:10px">🚨 OFFICIAL TSUNAMI WARNING — OPERATION WAVEGUARD</div>
+    <div style="color:var(--text);font-size:11px;line-height:2">
+      ISSUED: <span id="alert-time"></span><br>
+      AFFECTED AREA: Wavara Coastal Zone (all areas below 30m elevation)<br>
+      THREAT LEVEL: HIGH — Estimated Wave Height: 3–8 metres<br>
+      ESTIMATED ARRIVAL: 22 MINUTES<br>
+      <span style="color:var(--danger)">EVACUATE IMMEDIATELY. MOVE TO HIGH GROUND NOW.</span><br>
+      DO NOT RETURN UNTIL OFFICIAL ALL-CLEAR IS ISSUED.
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ════ FOOTER ═══════════════════════════════════════════════ -->
+<footer id="footer" style="display:none">
+  <p>OPERATION WAVEGUARD · EDUCATIONAL TSUNAMI WARNING SIMULATION · PHYSICS PROJECT</p>
+  <p style="margin-top:6px;font-size:9px;color:var(--border)">All values are simulated for educational purposes. Based on real tsunami physics and DART buoy technology.</p>
+</footer>
+
+<!-- ════════════════════════════════════════════════════════════
+     JAVASCRIPT
+════════════════════════════════════════════════════════════ -->
+<script>
+/* ─── STATE ────────────────────────────────────────────────── */
+const P = {
+  magnitude:7.2, distance:300, tsunamiSpeed:700,
+  oceanDepth:4000, seismicSpeed:5, buoySensitivity:80, warningThreshold:50
 };
+let simRunning=false, simAF=null, simStart=0;
+let seismicDetected=false, buoyDetected=false, warningIssued=false;
+let currentView='surface', currentSection='home', compareMode='hybrid';
+let waveTime=0, waveAF=null;
 
-// ── Global styles injected once ──────────────────────────────────────────────
-const GLOBAL_CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Share+Tech+Mono&family=Exo+2:wght@300;400;600&display=swap');
+/* ─── LOADING ──────────────────────────────────────────────── */
+const phases=['Initialising system…','Loading sensor network…','Calibrating buoys…','Connecting seismic grid…','System ready.'];
+let phaseIdx=0;
+const phaseEl=document.getElementById('load-phase');
+const phaseTimer=setInterval(()=>{
+  phaseIdx=Math.min(phaseIdx+1,phases.length-1);
+  phaseEl.textContent=phases[phaseIdx];
+},560);
+setTimeout(()=>{
+  clearInterval(phaseTimer);
+  document.getElementById('loading').style.display='none';
+  document.getElementById('navbar').style.display='flex';
+  document.getElementById('footer').style.display='block';
+  document.getElementById('alert-time').textContent=new Date().toUTCString();
+  buildStars();
+  startWaveAnimations();
+  updateLiveCalcs();
+  drawWave();
+  updateEqWave();
+  drawRadarChart();
+  renderCompareBars();
+  drawGraphs();
+},2900);
 
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    background: ${C.bg};
-    color: ${C.text};
-    font-family: 'Exo 2', sans-serif;
-    overflow-x: hidden;
+/* ─── STARS ────────────────────────────────────────────────── */
+function buildStars(){
+  const c=document.getElementById('stars');
+  for(let i=0;i<50;i++){
+    const s=document.createElement('div');
+    s.className='star';
+    const sz=Math.random()*2+.8;
+    s.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}%;top:${Math.random()*60}%;opacity:${Math.random()*.6+.15};--d:${(Math.random()*3+2).toFixed(1)}s;--delay:${(Math.random()*4).toFixed(1)}s`;
+    c.appendChild(s);
   }
-
-  ::-webkit-scrollbar { width: 6px; }
-  ::-webkit-scrollbar-track { background: ${C.bg}; }
-  ::-webkit-scrollbar-thumb { background: ${C.cyanDim}; border-radius: 3px; }
-
-  .orbitron { font-family: 'Orbitron', monospace; }
-  .mono     { font-family: 'Share Tech Mono', monospace; }
-
-  @keyframes pulse-ring {
-    0%   { transform: scale(0.8); opacity: 1; }
-    100% { transform: scale(2.4); opacity: 0; }
-  }
-  @keyframes radar-sweep {
-    from { transform: rotate(0deg); }
-    to   { transform: rotate(360deg); }
-  }
-  @keyframes float-bob {
-    0%,100% { transform: translateY(0px); }
-    50%     { transform: translateY(-6px); }
-  }
-  @keyframes seismic-shake {
-    0%,100% { transform: translateX(0); }
-    20%     { transform: translateX(-4px); }
-    40%     { transform: translateX(4px); }
-    60%     { transform: translateX(-3px); }
-    80%     { transform: translateX(3px); }
-  }
-  @keyframes glow-pulse {
-    0%,100% { box-shadow: 0 0 8px ${C.cyan}44; }
-    50%     { box-shadow: 0 0 22px ${C.cyan}bb; }
-  }
-  @keyframes wave-scroll {
-    from { background-position-x: 0; }
-    to   { background-position-x: 200px; }
-  }
-  @keyframes fadeInUp {
-    from { opacity:0; transform:translateY(30px); }
-    to   { opacity:1; transform:translateY(0); }
-  }
-  @keyframes scanline {
-    0%   { top: -8%; }
-    100% { top: 108%; }
-  }
-  @keyframes blink-alert {
-    0%,100% { opacity: 1; }
-    50%     { opacity: 0.2; }
-  }
-  @keyframes tsunami-travel {
-    from { left: 18%; }
-    to   { left: 78%; }
-  }
-  @keyframes seismic-travel {
-    from { left: 18%; }
-    to   { left: 80%; }
-  }
-  @keyframes ripple-out {
-    0%   { r: 0; opacity: 0.9; }
-    100% { r: 140; opacity: 0; }
-  }
-  @keyframes loading-bar {
-    from { width: 0%; }
-    to   { width: 100%; }
-  }
-  @keyframes spin {
-    from { transform: rotate(0deg); }
-    to   { transform: rotate(360deg); }
-  }
-
-  .float-bob  { animation: float-bob 3s ease-in-out infinite; }
-  .glow-box   { animation: glow-pulse 2s ease-in-out infinite; }
-
-  input[type=range] {
-    -webkit-appearance: none;
-    height: 4px;
-    background: ${C.border};
-    border-radius: 2px;
-    outline: none;
-    cursor: pointer;
-  }
-  input[type=range]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 14px; height: 14px;
-    border-radius: 50%;
-    background: ${C.cyan};
-    box-shadow: 0 0 8px ${C.cyan};
-    cursor: pointer;
-  }
-  input[type=range]:focus::-webkit-slider-thumb {
-    box-shadow: 0 0 14px ${C.cyan};
-  }
-
-  .tab-btn {
-    background: transparent;
-    border: 1px solid ${C.border};
-    color: ${C.muted};
-    padding: 6px 14px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-family: 'Orbitron', monospace;
-    font-size: 10px;
-    letter-spacing: 1px;
-    transition: all 0.2s;
-  }
-  .tab-btn:hover { border-color: ${C.cyan}; color: ${C.cyan}; }
-  .tab-btn.active {
-    background: ${C.cyan}22;
-    border-color: ${C.cyan};
-    color: ${C.cyan};
-    box-shadow: 0 0 12px ${C.cyan}44;
-  }
-
-  .panel {
-    background: ${C.panel};
-    border: 1px solid ${C.border};
-    border-radius: 8px;
-    padding: 16px;
-    position: relative;
-    overflow: hidden;
-  }
-  .panel::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, ${C.cyan}88, transparent);
-  }
-
-  .section-title {
-    font-family: 'Orbitron', monospace;
-    color: ${C.cyan};
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    font-size: 11px;
-    margin-bottom: 12px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .section-title::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: linear-gradient(90deg, ${C.cyan}44, transparent);
-  }
-
-  .threat-bar {
-    height: 8px;
-    border-radius: 4px;
-    background: ${C.border};
-    overflow: hidden;
-    position: relative;
-  }
-  .threat-fill {
-    height: 100%;
-    border-radius: 4px;
-    transition: width 0.5s ease, background 0.5s ease;
-  }
-
-  .nav-link {
-    background: none;
-    border: none;
-    color: ${C.muted};
-    cursor: pointer;
-    font-family: 'Orbitron', monospace;
-    font-size: 10px;
-    letter-spacing: 1.5px;
-    padding: 8px 14px;
-    border-radius: 4px;
-    transition: all 0.2s;
-  }
-  .nav-link:hover { color: ${C.cyan}; background: ${C.cyan}11; }
-  .nav-link.active { color: ${C.cyan}; background: ${C.cyan}1a; }
-
-  .btn-primary {
-    background: linear-gradient(135deg, ${C.cyan}22, ${C.blue}33);
-    border: 1px solid ${C.cyan};
-    color: ${C.cyan};
-    padding: 12px 28px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-family: 'Orbitron', monospace;
-    font-size: 12px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    transition: all 0.25s;
-    box-shadow: 0 0 16px ${C.cyan}33;
-  }
-  .btn-primary:hover {
-    background: linear-gradient(135deg, ${C.cyan}44, ${C.blue}55);
-    box-shadow: 0 0 28px ${C.cyan}66;
-    transform: translateY(-1px);
-  }
-  .btn-primary:active { transform: translateY(0); }
-
-  .btn-danger {
-    background: linear-gradient(135deg, ${C.red}22, ${C.red}11);
-    border: 1px solid ${C.red};
-    color: ${C.red};
-    padding: 10px 22px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-family: 'Orbitron', monospace;
-    font-size: 11px;
-    letter-spacing: 1.5px;
-    transition: all 0.25s;
-    box-shadow: 0 0 12px ${C.red}22;
-  }
-  .btn-danger:hover {
-    background: linear-gradient(135deg, ${C.red}44, ${C.red}22);
-    box-shadow: 0 0 22px ${C.red}55;
-  }
-  .btn-danger:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-  }
-
-  .value-display {
-    font-family: 'Share Tech Mono', monospace;
-    color: ${C.cyan};
-    font-size: 20px;
-    font-weight: bold;
-  }
-  .value-unit {
-    font-family: 'Share Tech Mono', monospace;
-    color: ${C.muted};
-    font-size: 12px;
-  }
-
-  /* Ocean wave animation */
-  .ocean-wave {
-    background: linear-gradient(90deg,
-      ${C.teal}00 0%,
-      ${C.teal}33 25%,
-      ${C.cyan}55 50%,
-      ${C.teal}33 75%,
-      ${C.teal}00 100%
-    );
-    background-size: 200px 100%;
-    animation: wave-scroll 2s linear infinite;
-  }
-
-  .alert-blink { animation: blink-alert 0.8s step-end infinite; }
-
-  /* Graph grid */
-  .graph-grid {
-    background-image:
-      linear-gradient(${C.border}55 1px, transparent 1px),
-      linear-gradient(90deg, ${C.border}55 1px, transparent 1px);
-    background-size: 40px 40px;
-  }
-`;
-
-// ── Shared sub-components ────────────────────────────────────────────────────
-
-function GlowLabel({ children, color = C.cyan, size = 10 }) {
-  return (
-    <span style={{
-      fontFamily: "'Orbitron', monospace",
-      color,
-      fontSize: size,
-      letterSpacing: 1.5,
-      textTransform: "uppercase",
-    }}>
-      {children}
-    </span>
-  );
 }
 
-function Slider({ label, min, max, step = 1, value, onChange, unit = "", color = C.cyan }) {
-  return (
-    <div style={{ marginBottom: 14 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-        <GlowLabel size={9}>{label}</GlowLabel>
-        <span className="mono" style={{ color, fontSize: 12 }}>{value}{unit}</span>
-      </div>
-      <input
-        type="range" min={min} max={max} step={step}
-        value={value}
-        onChange={e => onChange(Number(e.target.value))}
-        style={{ width: "100%", accentColor: color }}
-      />
-    </div>
-  );
+/* ─── SECTION NAVIGATION ───────────────────────────────────── */
+function showSection(id){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-link').forEach(l=>l.classList.remove('active'));
+  const sec=document.getElementById('sec-'+id);
+  if(sec)sec.classList.add('active');
+  const lnk=document.querySelector(`.nav-link[onclick="showSection('${id}')"]`);
+  if(lnk)lnk.classList.add('active');
+  currentSection=id;
+  window.scrollTo({top:0,behavior:'smooth'});
+  if(id==='graphs')drawGraphs();
+  if(id==='comparison'){drawRadarChart();renderCompareBars()}
 }
 
-function DataRow({ label, value, unit, color = C.cyan, flash = false }) {
-  return (
-    <div style={{
-      display: "flex", justifyContent: "space-between", alignItems: "center",
-      padding: "8px 0", borderBottom: `1px solid ${C.border}`,
-    }}>
-      <span style={{ fontSize: 11, color: C.muted, letterSpacing: 1 }}>{label}</span>
-      <span
-        className="mono"
-        style={{
-          color, fontSize: 14,
-          animation: flash ? "blink-alert 0.8s step-end infinite" : "none",
-        }}
-      >
-        {value}<span style={{ fontSize: 10, color: C.muted, marginLeft: 3 }}>{unit}</span>
-      </span>
-    </div>
-  );
+/* ─── LIGHT MODE ───────────────────────────────────────────── */
+function toggleLight(){document.body.classList.toggle('light')}
+
+/* ─── PARAMS ───────────────────────────────────────────────── */
+function updateParam(key,val,labelId,unit){
+  P[key]=parseFloat(val);
+  const el=document.getElementById(labelId);
+  if(el)el.textContent=parseFloat(val).toFixed(key==='magnitude'||key==='seismicSpeed'?1:0)+unit;
+  if(key==='oceanDepth'){
+    const v=Math.round(Math.sqrt(9.81*P.oceanDepth)*3.6);
+    const d=document.getElementById('depth-calc');
+    if(d)d.textContent=`v ≈ ${v} km/h at ${P.oceanDepth}m`;
+  }
+  updateLiveCalcs();
+}
+function updateLiveCalcs(){
+  const sd=(P.distance/(P.seismicSpeed*1000))*60;
+  const bd=(P.distance*.6)/(P.tsunamiSpeed/60);
+  const adv=Math.max(0,bd-sd-2);
+  const evac=20+P.magnitude*3;
+  const rel=Math.min(100,70+P.buoySensitivity*.25+(P.magnitude>6?10:0));
+  const threat=Math.min(100,Math.max(0,((P.magnitude-5)/4)*100));
+
+  setText('d-seismic',sd.toFixed(1));
+  setText('d-buoy',bd.toFixed(1));
+  setText('d-adv',adv.toFixed(1));
+  setText('d-evac',evac.toFixed(0));
+  setText('d-rel',rel.toFixed(1));
+  setText('adv-display',adv.toFixed(0));
+  setText('calc-s',sd.toFixed(1)+' min');
+  setText('calc-b',bd.toFixed(1)+' min');
+  setText('calc-a',adv.toFixed(1)+' min');
+
+  // Threat bar
+  const tFill=document.getElementById('threat-fill');
+  if(tFill){
+    tFill.style.width=threat+'%';
+    tFill.style.background=threat<30?'var(--green)':threat<65?'var(--gold)':'var(--danger)';
+  }
+  const tLabel=document.getElementById('threat-label');
+  if(tLabel){
+    const labels=['NOMINAL','ELEVATED','GUARDED','HIGH','CRITICAL'];
+    const idx=Math.floor(threat/25);
+    tLabel.textContent=labels[Math.min(idx,4)];
+    tLabel.style.color=threat<30?'var(--green)':threat<65?'var(--gold)':'var(--danger)';
+  }
+}
+function setText(id,val){const e=document.getElementById(id);if(e)e.textContent=val}
+
+/* ─── VIEW MODES ───────────────────────────────────────────── */
+function setView(v){
+  currentView=v;
+  document.querySelectorAll('[id^="vt-"]').forEach(b=>b.classList.remove('active'));
+  const bt=document.getElementById('vt-'+v.replace('-',''));
+  if(bt)bt.classList.add('active');
+
+  const simC=document.getElementById('sim-canvas');
+  const dashV=document.getElementById('dashboard-view');
+  const satV=document.getElementById('satellite-view');
+
+  if(simC)simC.style.display='none'; if(dashV)dashV.style.display='none'; if(satV)satV.style.display='none';
+
+  if(v==='dashboard'){dashV.style.display='block'}
+  else if(v==='satellite'){satV.style.display='block'}
+  else{
+    simC.style.display='block';
+    const lbl=document.getElementById('view-label');
+    if(lbl)lbl.textContent=v.toUpperCase().replace('-',' ')+' VIEW';
+    const sf=document.getElementById('seafloor');
+    const os=document.getElementById('ocean-surface');
+    if(v==='underground'){
+      if(sf)sf.style.background='linear-gradient(180deg,#3d1a00cc,#1a0a00)';
+      if(os)os.style.display='none';
+    }else{
+      if(sf)sf.style.background='linear-gradient(180deg,transparent,#1a0e06cc)';
+      if(os)os.style.display='block';
+    }
+  }
 }
 
-function ThreatMeter({ level }) {
-  // level 0-100
-  const color = level < 30 ? C.green : level < 60 ? C.orange : C.red;
-  const label = level < 20 ? "NOMINAL" : level < 40 ? "ELEVATED" : level < 65 ? "GUARDED" : level < 85 ? "HIGH" : "CRITICAL";
-  return (
-    <div>
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-        <GlowLabel size={9}>Threat Level</GlowLabel>
-        <span className="orbitron" style={{ color, fontSize: 10, letterSpacing: 2 }}>{label}</span>
-      </div>
-      <div className="threat-bar">
-        <div className="threat-fill" style={{ width: `${level}%`, background: `linear-gradient(90deg, ${C.green}, ${color})` }} />
-      </div>
-      <div style={{ display: "flex", justifyContent: "space-between", marginTop: 3 }}>
-        {["NOMINAL","ELEVATED","GUARDED","HIGH","CRITICAL"].map(l => (
-          <span key={l} style={{ fontSize: 7, color: C.muted, letterSpacing: 0.5 }}>{l}</span>
-        ))}
-      </div>
-    </div>
-  );
+/* ─── SIMULATION ───────────────────────────────────────────── */
+function resetSim(){
+  if(simAF)cancelAnimationFrame(simAF);
+  if(window._ringInterval){clearInterval(window._ringInterval);window._ringInterval=null;}
+  simRunning=false;seismicDetected=false;buoyDetected=false;warningIssued=false;
+  resetSensors();
+  moveDot('seismic-dot',14,false);
+  moveDot('tsunami-dot',14,false);
+  document.getElementById('sim-prog-bar').style.display='none';
+  document.getElementById('warning-banner').classList.remove('show');
+  document.getElementById('alert-box').classList.remove('show');
+  document.getElementById('alert-icon').style.display='none';
+  document.getElementById('island-wrap').classList.remove('shake');
+  document.getElementById('sat-alert').style.display='none';
+  document.getElementById('sat-tsunami-ring').setAttribute('r','0');
+  document.getElementById('btn-quake').disabled=false;
+  ['eq-ring1','eq-ring2','sat-ring1','sat-ring2'].forEach(id=>{const e=document.getElementById(id);if(e){e.setAttribute('r','0');e.setAttribute('opacity','0')}});
+  setDbState('s','○ STANDBY','','');
+  setDbState('b','○ STANDBY','','');
+  setDbState('h','○ STANDBY','','');
+  setDbState('a','○ STANDBY','','');
+  updateLiveCalcs();
+}
+function resetSensors(){
+  ['sbox1','sbox2'].forEach(id=>{const e=document.getElementById(id);if(e)e.classList.remove('active')});
+  ['slbl1','slbl2'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.color='var(--muted)'});
+  ['ss1','ss2'].forEach(id=>{const e=document.getElementById(id);if(e){e.textContent='○ STANDBY';e.classList.remove('on')}});
+  ['ss3','ss4'].forEach(id=>{const e=document.getElementById(id);if(e){e.textContent='○ STANDBY';e.classList.remove('on','teal')}});
+  const ss5=document.getElementById('ss5');if(ss5){ss5.textContent='○ STANDBY';ss5.classList.remove('on','danger')}
+  ['buoy1','buoy2'].forEach(id=>{const e=document.getElementById(id);if(e){e.style.filter='none';e.querySelectorAll('ellipse,circle').forEach(el=>{el.setAttribute('stroke','var(--muted)');el.setAttribute('fill','var(--border)')})}});
+  ['blbl1','blbl2'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.color='var(--muted)'});
+  const ctrl=document.getElementById('ctrl-ctr');if(ctrl){ctrl.style.borderColor='var(--border)';ctrl.style.boxShadow='none'}
+}
+function moveDot(id,leftPct,show){
+  const e=document.getElementById(id);if(!e)return;
+  e.style.left=leftPct+'%';e.style.display=show?'block':'none';
+}
+function setDbState(type,txt,color,extra){
+  const el=document.getElementById('db-'+type+'-state');if(!el)return;
+  el.textContent=txt;el.style.color=color||'var(--border)';
+  el.style.animation=extra==='blink'?'blink .9s step-end infinite':'none';
 }
 
-function RadarPulse({ size = 80, color = C.cyan, active = true }) {
-  return (
-    <div style={{ position: "relative", width: size, height: size }}>
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-        <circle cx={size/2} cy={size/2} r={size/2-2} fill="none" stroke={color + "22"} strokeWidth={1}/>
-        <circle cx={size/2} cy={size/2} r={size/4} fill="none" stroke={color + "33"} strokeWidth={1}/>
-        <circle cx={size/2} cy={size/2} r={4} fill={color} style={{ opacity: active ? 1 : 0.3 }}/>
-        {active && (
-          <>
-            <circle cx={size/2} cy={size/2} r={0} fill="none" stroke={color} strokeWidth={2}
-              style={{ animation: "pulse-ring 2s ease-out infinite" }}/>
-            <circle cx={size/2} cy={size/2} r={0} fill="none" stroke={color} strokeWidth={1.5}
-              style={{ animation: "pulse-ring 2s ease-out infinite", animationDelay: "0.6s" }}/>
-          </>
-        )}
-        {active && (
-          <line x1={size/2} y1={size/2} x2={size/2} y2={4}
-            stroke={color + "88"} strokeWidth={1.5}
-            style={{ transformOrigin: `${size/2}px ${size/2}px`, animation: "radar-sweep 3s linear infinite" }}/>
-        )}
-      </svg>
-    </div>
-  );
+function startSim(){
+  resetSim();
+  setTimeout(()=>{
+    simRunning=true;
+    simStart=Date.now();
+    document.getElementById('btn-quake').disabled=true;
+    document.getElementById('sim-prog-bar').style.display='block';
+
+    // Earthquake rings — JS-driven (CSS cannot animate SVG r attribute)
+    let ringT=0;
+    if(window._ringInterval)clearInterval(window._ringInterval);
+    window._ringInterval=setInterval(()=>{
+      ringT+=0.04;
+      const r1=document.getElementById('eq-ring1');
+      const r2=document.getElementById('eq-ring2');
+      const sr1=document.getElementById('sat-ring1');
+      const sr2=document.getElementById('sat-ring2');
+      const v1=(ringT%1)*90;
+      const v2=((ringT+0.5)%1)*90;
+      const o1=1-(ringT%1);
+      const o2=1-((ringT+0.5)%1);
+      if(r1){r1.setAttribute('r',v1);r1.setAttribute('opacity',o1)}
+      if(r2){r2.setAttribute('r',v2);r2.setAttribute('opacity',o2)}
+      if(sr1){sr1.setAttribute('r',v1*1.5);sr1.setAttribute('opacity',o1)}
+      if(sr2){sr2.setAttribute('r',v2*1.5);sr2.setAttribute('opacity',o2)}
+    },30);
+
+    moveDot('seismic-dot',14,true);
+    moveDot('tsunami-dot',14,true);
+    setDbState('s','○ MONITORING…','var(--muted)','');
+    setDbState('b','○ MONITORING…','var(--muted)','');
+    setDbState('h','○ PROCESSING…','var(--muted)','');
+
+    tick();
+  },50);
 }
 
-// ── SECTION 1: Home / Hero ───────────────────────────────────────────────────
-function HeroSection({ onLaunch }) {
-  const [loaded, setLoaded] = useState(false);
-  useEffect(() => { setTimeout(() => setLoaded(true), 200); }, []);
+function tick(){
+  const el=Date.now()-simStart;
+  const TOTAL=9000;
+  const t=Math.min(el/TOTAL,1);
 
-  return (
-    <div style={{
-      minHeight: "100vh", display: "flex", flexDirection: "column",
-      alignItems: "center", justifyContent: "center",
-      position: "relative", overflow: "hidden",
-      background: `radial-gradient(ellipse at 50% 70%, #002244 0%, ${C.bg} 70%)`,
-    }}>
-      {/* Animated ocean background */}
-      <svg style={{ position: "absolute", bottom: 0, left: 0, right: 0 }} viewBox="0 0 1440 320" preserveAspectRatio="none" height="280">
-        <defs>
-          <linearGradient id="ocean-grad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#003366" stopOpacity="0.7"/>
-            <stop offset="100%" stopColor="#001122" stopOpacity="1"/>
-          </linearGradient>
-        </defs>
-        {[0,1,2].map(i => (
-          <path key={i} fill={`url(#ocean-grad)`} fillOpacity={0.6 - i*0.15}
-            style={{ animation: `wave-scroll ${3 + i*0.7}s linear infinite`, animationDirection: i%2?"reverse":"normal" }}
-            d={`M0,${120+i*30} C360,${60+i*20} 720,${180+i*20} 1080,${100+i*20} L1440,${120+i*20} L1440,320 L0,320 Z`}/>
-        ))}
-      </svg>
+  // Progress
+  const pf=document.getElementById('sim-prog-fill');if(pf)pf.style.width=(t*100)+'%';
 
-      {/* Stars */}
-      {Array.from({length:40}).map((_,i) => (
-        <div key={i} style={{
-          position:"absolute",
-          left: `${Math.random()*100}%`, top: `${Math.random()*60}%`,
-          width: Math.random()*2+1, height: Math.random()*2+1,
-          borderRadius:"50%", background:"white",
-          opacity: Math.random()*0.7+0.2,
-          animation: `blink-alert ${Math.random()*3+2}s step-end infinite`,
-          animationDelay: `${Math.random()*3}s`,
-        }}/>
-      ))}
+  // Seismic dot — fast
+  const seisT=Math.min(el/(TOTAL*.18),1);
+  moveDot('seismic-dot',14+seisT*68,true);
 
-      {/* Grid overlay */}
-      <div style={{
-        position:"absolute", inset:0,
-        backgroundImage:`linear-gradient(${C.border}33 1px,transparent 1px),linear-gradient(90deg,${C.border}33 1px,transparent 1px)`,
-        backgroundSize:"60px 60px",
-        opacity: 0.4,
-      }}/>
+  // Tsunami dot — slower
+  const tsuT=Math.max(0,Math.min((el-600)/(TOTAL*.9),1));
+  moveDot('tsunami-dot',14+tsuT*60,true);
 
-      {/* Content */}
-      <div style={{
-        position:"relative", zIndex:10, textAlign:"center",
-        padding:"40px 24px",
-        opacity: loaded ? 1 : 0, transform: loaded ? "translateY(0)" : "translateY(30px)",
-        transition: "opacity 0.8s ease, transform 0.8s ease",
-      }}>
-        <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:16, marginBottom:20 }}>
-          <RadarPulse size={60} active/>
-          <div>
-            <div style={{ fontSize:9, letterSpacing:5, color:C.muted, fontFamily:"'Orbitron',monospace", marginBottom:4 }}>
-              EARLY WARNING NETWORK
-            </div>
-            <h1 className="orbitron" style={{
-              fontSize:"clamp(32px,6vw,72px)",
-              fontWeight:900,
-              background:`linear-gradient(135deg, ${C.cyan}, ${C.teal}, #ffffff)`,
-              WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent",
-              letterSpacing:4,
-              lineHeight:1,
-            }}>
-              OPERATION<br/>WAVEGUARD
-            </h1>
-          </div>
-          <RadarPulse size={60} active/>
-        </div>
+  // Satellite tsunami ring
+  const sr=document.getElementById('sat-tsunami-ring');
+  if(sr)sr.setAttribute('r',(tsuT*200).toString());
 
-        <p style={{
-          fontSize:15, color:C.text, maxWidth:580, margin:"0 auto 32px",
-          lineHeight:1.7, letterSpacing:0.5,
-        }}>
-          A hybrid tsunami early-warning system combining <span style={{color:C.cyan}}>seismic underground sensors</span> and{" "}
-          <span style={{color:C.teal}}>ocean pressure buoys</span> to protect coastal communities with
-          maximum speed and reliability.
-        </p>
-
-        <div style={{ display:"flex", gap:16, justifyContent:"center", flexWrap:"wrap" }}>
-          <button className="btn-primary" onClick={onLaunch}>
-            ▶ Launch Simulation
-          </button>
-          <button className="tab-btn" onClick={onLaunch} style={{ padding:"12px 24px", fontSize:11 }}>
-            📚 Wave Science
-          </button>
-        </div>
-
-        {/* Stats row */}
-        <div style={{
-          display:"flex", gap:32, justifyContent:"center", marginTop:48, flexWrap:"wrap",
-        }}>
-          {[
-            ["&lt; 2 MIN","Seismic Detection"],
-            ["HYBRID","System Type"],
-            ["98.7%","Reliability"],
-            ["15+ MIN","Warning Advantage"],
-          ].map(([v,l]) => (
-            <div key={l} style={{ textAlign:"center" }}>
-              <div className="orbitron" style={{ color:C.cyan, fontSize:18, fontWeight:700 }}
-                dangerouslySetInnerHTML={{__html:v}}/>
-              <div style={{ fontSize:9, color:C.muted, letterSpacing:2, marginTop:2 }}>{l}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── SECTION 2+3: Simulation + Dials ─────────────────────────────────────────
-function SimulationSection({ params, setParams }) {
-  const [simState, setSimState] = useState("idle"); // idle | running | seismic | tsunami | warning | complete
-  const [simProgress, setSimProgress] = useState(0);
-  const [seismicDetected, setSeismicDetected] = useState(false);
-  const [buoyDetected, setBuoyDetected] = useState(false);
-  const [warningIssued, setWarningIssued] = useState(false);
-  const [viewMode, setViewMode] = useState("surface");
-  const [tsunamiPos, setTsunamiPos] = useState(0); // 0-100%
-  const [seismicPos, setSeismicPos] = useState(0);
-  const [ripples, setRipples] = useState([]);
-  const animRef = useRef(null);
-  const startTimeRef = useRef(null);
-
-  // Calculated values
-  const seismicSpeed = params.seismicSpeed; // km/s
-  const distance = params.distance; // km
-  const tsunamiSpeed = params.tsunamiSpeed; // km/h
-  const seismicDetectionTime = (distance / (seismicSpeed * 1000)) * 60; // minutes
-  const buoyDetectionTime = (distance * 0.6) / (tsunamiSpeed / 60); // minutes
-  const warningAdvantage = Math.max(0, buoyDetectionTime - seismicDetectionTime - 2);
-  const evacuationTime = 20 + params.magnitude * 3;
-  const threatLevel = clamp(((params.magnitude - 5) / 4) * 100, 0, 100);
-  const reliability = clamp(70 + params.buoySensitivity * 0.25 + (params.magnitude > 6 ? 10 : 0), 0, 100);
-
-  const resetSim = () => {
-    setSimState("idle");
-    setSimProgress(0);
-    setSeismicDetected(false);
-    setBuoyDetected(false);
-    setWarningIssued(false);
-    setTsunamiPos(0);
-    setSeismicPos(0);
-    setRipples([]);
-    if (animRef.current) cancelAnimationFrame(animRef.current);
-  };
-
-  const startSim = () => {
-    resetSim();
-    setTimeout(() => {
-      setSimState("running");
-      startTimeRef.current = Date.now();
-      const DURATION = 8000; // 8 seconds for full sim
-
-      const animate = () => {
-        const elapsed = Date.now() - startTimeRef.current;
-        const t = clamp(elapsed / DURATION, 0, 1);
-        setSimProgress(t * 100);
-
-        // Seismic wave — very fast
-        const seisT = clamp(elapsed / (DURATION * 0.18), 0, 1);
-        setSeismicPos(seisT * 82);
-
-        // Tsunami — slower
-        const tsuT = clamp((elapsed - 600) / (DURATION * 0.9), 0, 1);
-        setTsunamiPos(tsuT * 62);
-
-        // Seismic detection at ~15%
-        if (t > 0.15) setSeismicDetected(true);
-
-        // Buoy detection at ~45%
-        if (t > 0.45) setBuoyDetected(true);
-
-        // Warning at ~50%
-        if (t > 0.50) setWarningIssued(true);
-
-        // Add ripples
-        if (elapsed < 800 && Math.random() < 0.2) {
-          setRipples(r => [...r.slice(-4), { id: Date.now(), t: 0 }]);
-        }
-
-        if (t < 1) {
-          animRef.current = requestAnimationFrame(animate);
-        } else {
-          setSimState("complete");
-        }
-      };
-      animRef.current = requestAnimationFrame(animate);
-    }, 100);
-  };
-
-  useEffect(() => () => { if (animRef.current) cancelAnimationFrame(animRef.current); }, []);
-
-  const views = ["surface","underground","satellite","cross-section","dashboard"];
-
-  return (
-    <div>
-      {/* View mode tabs */}
-      <div style={{ display:"flex", gap:8, marginBottom:16, flexWrap:"wrap" }}>
-        {views.map(v => (
-          <button key={v} className={`tab-btn ${viewMode===v?"active":""}`}
-            onClick={() => setViewMode(v)}>
-            {v.toUpperCase()}
-          </button>
-        ))}
-        <div style={{ flex:1 }}/>
-        <button className="btn-danger" onClick={startSim} disabled={simState==="running"}>
-          {simState==="running" ? "● RUNNING..." : "⚡ Start Earthquake"}
-        </button>
-        <button className="tab-btn" onClick={resetSim} style={{padding:"6px 14px"}}>↺ Reset</button>
-      </div>
-
-      <div style={{ display:"grid", gridTemplateColumns:"1fr 320px", gap:16 }}>
-        {/* Main simulation canvas */}
-        <SimCanvas
-          viewMode={viewMode}
-          simState={simState}
-          seismicPos={seismicPos}
-          tsunamiPos={tsunamiPos}
-          seismicDetected={seismicDetected}
-          buoyDetected={buoyDetected}
-          warningIssued={warningIssued}
-          ripples={ripples}
-          params={params}
-          simProgress={simProgress}
-        />
-
-        {/* Right panel: Controls + Data */}
-        <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
-          {/* Live data */}
-          <div className="panel">
-            <div className="section-title">Live Data</div>
-            <DataRow label="Seismic Detection" value={seismicDetectionTime.toFixed(1)} unit="min"
-              color={seismicDetected ? C.cyan : C.muted} flash={seismicDetected && simState==="running"}/>
-            <DataRow label="Buoy Detection" value={buoyDetectionTime.toFixed(1)} unit="min"
-              color={buoyDetected ? C.teal : C.muted}/>
-            <DataRow label="Warning Advantage" value={warningAdvantage.toFixed(1)} unit="min"
-              color={C.green}/>
-            <DataRow label="Est. Evacuation" value={evacuationTime.toFixed(0)} unit="min"
-              color={C.orange}/>
-            <DataRow label="Reliability" value={reliability.toFixed(1)} unit="%"
-              color={reliability > 90 ? C.green : C.orange}/>
-            <div style={{ marginTop:12 }}>
-              <ThreatMeter level={threatLevel}/>
-            </div>
-          </div>
-
-          {/* Sensor status */}
-          <div className="panel">
-            <div className="section-title">Sensor Network</div>
-            {[
-              { label:"SEISMIC SENSOR #1", active:seismicDetected, color:C.cyan },
-              { label:"SEISMIC SENSOR #2", active:seismicDetected, color:C.cyan },
-              { label:"BUOY ALPHA", active:buoyDetected, color:C.teal },
-              { label:"BUOY BETA", active:buoyDetected, color:C.teal },
-              { label:"WARNING SYSTEM", active:warningIssued, color:C.red },
-            ].map(s => (
-              <div key={s.label} style={{
-                display:"flex", justifyContent:"space-between", alignItems:"center",
-                padding:"6px 0", borderBottom:`1px solid ${C.border}`,
-              }}>
-                <span style={{ fontSize:9, color:C.muted, letterSpacing:1 }}>{s.label}</span>
-                <span style={{
-                  fontSize:9, fontFamily:"'Orbitron',monospace",
-                  color: s.active ? s.color : C.border,
-                  animation: s.active && simState==="running" ? "blink-alert 0.8s step-end infinite" : "none",
-                  textShadow: s.active ? `0 0 8px ${s.color}` : "none",
-                }}>
-                  {s.active ? "● ACTIVE" : "○ STANDBY"}
-                </span>
-              </div>
-            ))}
-          </div>
-
-          {/* Hybrid status */}
-          {warningIssued && (
-            <div className="panel" style={{ borderColor:C.red, background:`${C.red}11` }}>
-              <div className="section-title" style={{ color:C.red }}>
-                ⚠ Emergency Alert
-              </div>
-              <div className="orbitron alert-blink" style={{
-                color:C.red, fontSize:14, textAlign:"center",
-                padding:"10px 0", letterSpacing:2,
-              }}>
-                TSUNAMI WARNING<br/>ISSUED FOR WAVARA
-              </div>
-              <div style={{ fontSize:10, color:C.text, textAlign:"center", marginTop:8 }}>
-                Hybrid system advantage: <strong style={{color:C.green}}>{warningAdvantage.toFixed(0)} minutes</strong> earlier than buoy-only
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Controls row */}
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:16, marginTop:16 }}>
-        <div className="panel">
-          <div className="section-title">Earthquake Controls</div>
-          <Slider label="Magnitude" min={5} max={9} step={0.1} value={params.magnitude}
-            onChange={v => setParams(p=>({...p,magnitude:v}))} unit=" M"/>
-          <Slider label="Distance from Zone" min={50} max={800} step={10} value={params.distance}
-            onChange={v => setParams(p=>({...p,distance:v}))} unit=" km"/>
-          <Slider label="Seismic Wave Speed" min={3} max={8} step={0.1} value={params.seismicSpeed}
-            onChange={v => setParams(p=>({...p,seismicSpeed:v}))} unit=" km/s" color={C.cyan}/>
-        </div>
-        <div className="panel">
-          <div className="section-title">Ocean Controls</div>
-          <Slider label="Tsunami Speed" min={100} max={900} step={10} value={params.tsunamiSpeed}
-            onChange={v => setParams(p=>({...p,tsunamiSpeed:v}))} unit=" km/h"/>
-          <Slider label="Ocean Depth" min={500} max={8000} step={100} value={params.oceanDepth}
-            onChange={v => setParams(p=>({...p,oceanDepth:v}))} unit=" m" color={C.teal}/>
-          <Slider label="Warning Threshold" min={10} max={100} step={5} value={params.warningThreshold}
-            onChange={v => setParams(p=>({...p,warningThreshold:v}))} unit=" %"/>
-        </div>
-        <div className="panel">
-          <div className="section-title">Sensor Controls</div>
-          <Slider label="Buoy Sensitivity" min={10} max={100} step={1} value={params.buoySensitivity}
-            onChange={v => setParams(p=>({...p,buoySensitivity:v}))} unit=" %" color={C.teal}/>
-          <div style={{ marginTop:8, padding:"10px", background:C.bg, borderRadius:6, border:`1px solid ${C.border}` }}>
-            <div style={{ fontSize:10, color:C.muted, marginBottom:6 }}>Seismic Speed Formula</div>
-            <div className="mono" style={{ color:C.cyan, fontSize:13 }}>
-              v = √(E/ρ)
-            </div>
-            <div style={{ fontSize:9, color:C.muted, marginTop:4 }}>
-              v = {params.seismicSpeed} km/s &nbsp;·&nbsp; ρ = crustal density
-            </div>
-          </div>
-          <div style={{ marginTop:8, padding:"10px", background:C.bg, borderRadius:6, border:`1px solid ${C.border}` }}>
-            <div style={{ fontSize:10, color:C.muted, marginBottom:4 }}>Tsunami Speed Formula</div>
-            <div className="mono" style={{ color:C.teal, fontSize:13 }}>
-              v = √(g·d)
-            </div>
-            <div style={{ fontSize:9, color:C.muted, marginTop:4 }}>
-              v = √(9.81 × {params.oceanDepth}) ≈ {Math.round(Math.sqrt(9.81*params.oceanDepth)*3.6)} km/h
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── Simulation Canvas ────────────────────────────────────────────────────────
-function SimCanvas({ viewMode, simState, seismicPos, tsunamiPos, seismicDetected, buoyDetected, warningIssued, params, simProgress }) {
-  const canvasH = 380;
-
-  if (viewMode === "dashboard") return <DashboardView seismicDetected={seismicDetected} buoyDetected={buoyDetected} warningIssued={warningIssued} params={params} simProgress={simProgress}/>;
-  if (viewMode === "satellite") return <SatelliteView simState={simState} tsunamiPos={tsunamiPos} warningIssued={warningIssued}/>;
-
-  return (
-    <div className="panel" style={{ height:canvasH, position:"relative", overflow:"hidden", padding:0 }}>
-      {/* Ocean background gradient */}
-      <div style={{
-        position:"absolute", inset:0,
-        background: viewMode==="underground"
-          ? `linear-gradient(180deg, #001428 0%, #3d1a00 60%, #1a0a00 100%)`
-          : `linear-gradient(180deg, #020c18 0%, #001e40 30%, #00264d 60%, #001428 100%)`,
-      }}/>
-
-      {/* Grid */}
-      <div style={{ position:"absolute", inset:0, opacity:0.2 }}
-        className="graph-grid"/>
-
-      {/* Seabed / Underground label */}
-      {(viewMode==="cross-section" || viewMode==="underground") && (
-        <div style={{ position:"absolute", bottom:0, left:0, right:0, height:100,
-          background:`linear-gradient(180deg, transparent, #3d1a00)`,
-          borderTop:`2px dashed ${C.border}`,
-        }}>
-          <div style={{ position:"absolute", top:8, left:16, fontSize:9, color:C.muted, letterSpacing:2 }}>SEAFLOOR / CRUST</div>
-        </div>
-      )}
-
-      {/* Ocean waves (surface) */}
-      {(viewMode==="surface" || viewMode==="cross-section") && (
-        <div style={{
-          position:"absolute", top:120, left:0, right:0, height:20,
-          opacity: 0.5,
-        }} className="ocean-wave"/>
-      )}
-
-      {/* EARTHQUAKE EPICENTRE */}
-      <div style={{ position:"absolute", left:"18%", bottom: viewMode==="underground"?"50%":"30%",
-        transform:"translate(-50%,50%)" }}>
-        <svg width={40} height={40} viewBox="0 0 40 40">
-          <polygon points="20,4 36,36 4,36" fill="none" stroke={C.red} strokeWidth={1.5}/>
-          <text x={20} y={28} textAnchor="middle" fill={C.red} fontSize={14} fontFamily="monospace">!</text>
-          {simState !== "idle" && (
-            <>
-              <circle cx={20} cy={20} r={0} fill="none" stroke={C.red} strokeWidth={2}
-                style={{ animation:"pulse-ring 1.5s ease-out infinite" }}/>
-              <circle cx={20} cy={20} r={0} fill="none" stroke={C.red} strokeWidth={1}
-                style={{ animation:"pulse-ring 1.5s ease-out infinite", animationDelay:"0.5s" }}/>
-            </>
-          )}
-        </svg>
-        <div style={{ fontSize:8, color:C.red, textAlign:"center", letterSpacing:1, marginTop:-6 }}>EPICENTRE</div>
-      </div>
-
-      {/* Seismic wave (underground/cross-section) */}
-      {(viewMode==="underground" || viewMode==="cross-section") && simState !== "idle" && seismicPos > 0 && (
-        <div style={{
-          position:"absolute",
-          left: `${18 + seismicPos * 0.62}%`,
-          bottom:"35%",
-          transform:"translate(-50%,50%)",
-          transition:"left 0.05s linear",
-        }}>
-          <div style={{
-            width:28, height:28, borderRadius:"50%",
-            background:`radial-gradient(circle, ${C.cyan}88, transparent)`,
-            border:`2px solid ${C.cyan}`,
-            boxShadow:`0 0 16px ${C.cyan}`,
-            animation:"glow-pulse 0.5s ease-in-out infinite",
-          }}/>
-          <div style={{ fontSize:7, color:C.cyan, textAlign:"center", marginTop:4, letterSpacing:1 }}>S-WAVE</div>
-        </div>
-      )}
-
-      {/* Tsunami wave (surface) */}
-      {(viewMode==="surface" || viewMode==="cross-section") && simState !== "idle" && tsunamiPos > 0 && (
-        <div style={{
-          position:"absolute",
-          left: `${18 + tsunamiPos}%`,
-          top:"100px",
-          transform:"translateX(-50%)",
-          transition:"left 0.05s linear",
-        }}>
-          <svg width={50} height={60} viewBox="0 0 50 60">
-            <path d="M0,50 Q12,15 25,30 Q38,45 50,20 L50,60 L0,60 Z"
-              fill={`${C.teal}66`} stroke={C.teal} strokeWidth={1.5}/>
-          </svg>
-          <div style={{ fontSize:7, color:C.teal, textAlign:"center", letterSpacing:1 }}>TSUNAMI</div>
-        </div>
-      )}
-
-      {/* Seismic sensor icons */}
-      {[35, 50].map((pct, i) => (
-        <div key={i} style={{
-          position:"absolute",
-          left:`${pct}%`,
-          bottom: viewMode==="underground" ? "52%" : "28%",
-          transform:"translate(-50%,50%)",
-        }}>
-          <div style={{
-            width:18, height:18, borderRadius:2,
-            background: seismicDetected ? `${C.cyan}33` : `${C.border}`,
-            border:`1.5px solid ${seismicDetected ? C.cyan : C.muted}`,
-            boxShadow: seismicDetected ? `0 0 12px ${C.cyan}` : "none",
-            display:"flex", alignItems:"center", justifyContent:"center",
-            fontSize:8, color: seismicDetected ? C.cyan : C.muted,
-            transition:"all 0.3s",
-          }}>▲</div>
-          <div style={{ fontSize:7, color: seismicDetected ? C.cyan : C.muted, textAlign:"center", letterSpacing:1, marginTop:2 }}>S{i+1}</div>
-        </div>
-      ))}
-
-      {/* Ocean buoys */}
-      {[45, 60].map((pct, i) => (
-        <div key={i} style={{
-          position:"absolute",
-          left:`${pct}%`,
-          top:"105px",
-          transform:"translateX(-50%)",
-          animation: "float-bob 3s ease-in-out infinite",
-          animationDelay: `${i*0.5}s`,
-        }}>
-          <svg width={24} height={32} viewBox="0 0 24 32">
-            <ellipse cx={12} cy={10} rx={8} ry={5}
-              fill={buoyDetected ? `${C.teal}55` : `${C.border}88`}
-              stroke={buoyDetected ? C.teal : C.muted} strokeWidth={1.5}/>
-            <line x1={12} y1={15} x2={12} y2={28} stroke={buoyDetected ? C.teal : C.muted} strokeWidth={1}/>
-            <circle cx={12} cy={28} r={3} fill={buoyDetected ? C.teal : C.border}
-              style={{ filter: buoyDetected ? `drop-shadow(0 0 6px ${C.teal})` : "none" }}/>
-          </svg>
-          <div style={{ fontSize:7, color: buoyDetected ? C.teal : C.muted, textAlign:"center", letterSpacing:1 }}>B{i+1}</div>
-        </div>
-      ))}
-
-      {/* Island — Wavara */}
-      <div style={{
-        position:"absolute", right:"8%", top:"80px",
-        animation: warningIssued ? "seismic-shake 0.4s ease-in-out infinite" : "none",
-      }}>
-        <svg width={80} height={100} viewBox="0 0 80 100">
-          <ellipse cx={40} cy={80} rx={38} ry={18} fill="#1a3a1a" stroke="#2a5a2a" strokeWidth={1}/>
-          <ellipse cx={40} cy={65} rx={28} ry={22} fill="#1e4a1e" stroke="#2a5a2a" strokeWidth={1}/>
-          <polygon points="30,45 40,10 50,45" fill="#2a6a2a" stroke="#3a7a3a" strokeWidth={1}/>
-          <rect x={36} y={35} width={8} height={14} fill="#8b4513" opacity={0.8}/>
-          {/* buildings */}
-          {[[20,60],[50,55],[35,62]].map(([x,y],j)=>(
-            <rect key={j} x={x} y={y} width={6} height={8} fill={warningIssued ? C.red : "#446"} opacity={0.9}
-              style={{ transition:"fill 0.3s" }}/>
-          ))}
-          {warningIssued && (
-            <text x={40} y={100} textAnchor="middle" fill={C.red} fontSize={8} fontFamily="monospace"
-              style={{ animation:"blink-alert 0.6s step-end infinite" }}>⚠ ALERT</text>
-          )}
-        </svg>
-        <div className="orbitron" style={{ fontSize:8, color:C.green, textAlign:"center", letterSpacing:2 }}>WAVARA</div>
-      </div>
-
-      {/* Warning Control Centre */}
-      <div style={{ position:"absolute", right:"8%", bottom:20 }}>
-        <div style={{
-          width:70, height:50, borderRadius:4,
-          background: warningIssued ? `${C.red}22` : `${C.panel}`,
-          border:`1.5px solid ${warningIssued ? C.red : C.border}`,
-          display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center",
-          boxShadow: warningIssued ? `0 0 20px ${C.red}55` : "none",
-          transition:"all 0.3s",
-        }}>
-          <div style={{ fontSize:18 }}>🖥️</div>
-          <div style={{ fontSize:7, color: warningIssued ? C.red : C.muted, letterSpacing:1 }}>CTRL-CTR</div>
-        </div>
-        <RadarPulse size={30} color={warningIssued ? C.red : C.cyan} active={simState!=="idle"}/>
-      </div>
-
-      {/* Progress bar */}
-      {simState === "running" && (
-        <div style={{ position:"absolute", bottom:0, left:0, right:0, height:3, background:C.border }}>
-          <div style={{ height:"100%", width:`${simProgress}%`, background:`linear-gradient(90deg,${C.cyan},${C.teal})`,
-            transition:"width 0.1s linear" }}/>
-        </div>
-      )}
-
-      {/* View label */}
-      <div style={{ position:"absolute", top:12, left:16 }}>
-        <GlowLabel size={9}>{viewMode.toUpperCase()} VIEW</GlowLabel>
-      </div>
-
-      {/* Complete banner */}
-      {simState === "complete" && (
-        <div style={{
-          position:"absolute", top:0, left:0, right:0,
-          background:`linear-gradient(90deg, ${C.green}22, ${C.green}11)`,
-          borderBottom:`1px solid ${C.green}`,
-          padding:"8px 16px", textAlign:"center",
-          fontFamily:"'Orbitron',monospace", fontSize:11, color:C.green, letterSpacing:2,
-        }}>
-          ✓ SIMULATION COMPLETE — Hybrid Warning Issued {warningIssued ? `· Advantage: ${Math.max(0,(buoyDetectedTime=>buoyDetectedTime))}` : ""}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function DashboardView({ seismicDetected, buoyDetected, warningIssued, params, simProgress }) {
-  return (
-    <div className="panel" style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gridTemplateRows:"1fr 1fr", gap:12, height:380, padding:12 }}>
-      {[
-        { label:"SEISMIC NETWORK", color: C.cyan, active: seismicDetected, icon:"📡" },
-        { label:"BUOY NETWORK", color: C.teal, active: buoyDetected, icon:"🌊" },
-        { label:"HYBRID AI CORE", color: C.blue, active: seismicDetected || buoyDetected, icon:"🧠" },
-        { label:"ALERT BROADCAST", color: C.red, active: warningIssued, icon:"⚠️" },
-      ].map(s => (
-        <div key={s.label} style={{
-          border:`1px solid ${s.active ? s.color : C.border}`,
-          borderRadius:8, padding:12,
-          background: s.active ? `${s.color}11` : C.bg,
-          boxShadow: s.active ? `0 0 16px ${s.color}33` : "none",
-          display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center",
-          transition:"all 0.4s",
-        }}>
-          <div style={{ fontSize:28, marginBottom:8 }}>{s.icon}</div>
-          <RadarPulse size={50} color={s.color} active={s.active}/>
-          <div className="orbitron" style={{ color: s.active ? s.color : C.muted, fontSize:9, letterSpacing:2, marginTop:8 }}>
-            {s.label}
-          </div>
-          <div style={{ fontSize:9, color: s.active ? s.color : C.border, marginTop:4,
-            animation: s.active ? "blink-alert 1s step-end infinite" : "none" }}>
-            {s.active ? "● ACTIVE" : "○ STANDBY"}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function SatelliteView({ simState, tsunamiPos, warningIssued }) {
-  return (
-    <div className="panel" style={{ height:380, padding:0, position:"relative", overflow:"hidden",
-      background:`radial-gradient(ellipse at 50% 50%, #001e3d, ${C.bg})` }}>
-      <div style={{ position:"absolute", inset:0, opacity:0.15 }} className="graph-grid"/>
-      {/* Ocean top-down */}
-      <svg width="100%" height="100%" viewBox="0 0 600 380">
-        {/* Ocean */}
-        <rect x={0} y={0} width={600} height={380} fill="#001428" fillOpacity={0.7}/>
-        {/* Epicentre */}
-        <circle cx={120} cy={190} r={8} fill={C.red} fillOpacity={0.8}/>
-        <circle cx={120} cy={190} r={0} fill="none" stroke={C.red} strokeWidth={2} style={{ animation:"pulse-ring 2s ease-out infinite" }}/>
-        <circle cx={120} cy={190} r={0} fill="none" stroke={C.red} strokeWidth={1} style={{ animation:"pulse-ring 2s ease-out infinite", animationDelay:"0.7s" }}/>
-        {/* Tsunami rings top-down */}
-        {simState !== "idle" && tsunamiPos > 0 && (
-          <circle cx={120} cy={190} r={tsunamiPos * 2.5} fill="none" stroke={C.teal} strokeWidth={2} strokeOpacity={0.7}/>
-        )}
-        {/* Buoys */}
-        {[[280,180],[360,200]].map(([x,y],i) => (
-          <circle key={i} cx={x} cy={y} r={6} fill={C.teal} fillOpacity={0.8}
-            stroke={C.teal} strokeWidth={1}/>
-        ))}
-        {/* Island */}
-        <ellipse cx={480} cy={190} rx={40} ry={28} fill="#1e3a1e" stroke="#2a5a2a" strokeWidth={1.5}/>
-        {warningIssued && (
-          <text x={480} y={195} textAnchor="middle" fill={C.red} fontSize={12} fontFamily="monospace"
-            style={{ animation:"blink-alert 0.8s step-end infinite" }}>⚠</text>
-        )}
-        {/* Satellite grid lines */}
-        {[60,120,180,240,300,360,420,480,540].map(x => (
-          <line key={x} x1={x} y1={0} x2={x} y2={380} stroke={C.cyan} strokeWidth={0.5} strokeOpacity={0.1}/>
-        ))}
-        {[40,80,120,160,200,240,280,320,360].map(y => (
-          <line key={y} x1={0} y1={y} x2={600} y2={y} stroke={C.cyan} strokeWidth={0.5} strokeOpacity={0.1}/>
-        ))}
-      </svg>
-      <div style={{ position:"absolute", top:12, left:16 }}>
-        <GlowLabel size={9}>SATELLITE VIEW — TOP DOWN</GlowLabel>
-      </div>
-    </div>
-  );
-}
-
-// ── SECTION 5: Wave Science ──────────────────────────────────────────────────
-function WaveScienceSection() {
-  const [hover, setHover] = useState(null);
-  const [waveFreq, setWaveFreq] = useState(1);
-  const [waveAmp, setWaveAmp] = useState(30);
-  const [time, setTime] = useState(0);
-  const animRef = useRef(null);
-
-  useEffect(() => {
-    const animate = () => {
-      setTime(t => t + 0.04);
-      animRef.current = requestAnimationFrame(animate);
-    };
-    animRef.current = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(animRef.current);
-  }, []);
-
-  const concepts = [
-    { id:"amplitude", label:"Amplitude", color:C.red, desc:"Maximum displacement of a wave from its rest position. Larger amplitude = more energy." },
-    { id:"wavelength", label:"Wavelength (λ)", color:C.cyan, desc:"Distance between two consecutive wave crests or troughs. Symbol: λ (lambda)." },
-    { id:"frequency", label:"Frequency (f)", color:C.orange, desc:"Number of complete wave cycles per second. Measured in Hertz (Hz). f = 1/T." },
-    { id:"period", label:"Time Period (T)", color:C.green, desc:"Time for one complete wave cycle. T = 1/f. Longer period = slower wave oscillation." },
-    { id:"transverse", label:"Transverse Waves", color:C.teal, desc:"Particles oscillate perpendicular to wave direction. Examples: light, water surface waves." },
-    { id:"longitudinal", label:"Longitudinal Waves", color:"#ff9900", desc:"Particles oscillate parallel to wave direction. Examples: sound, seismic P-waves." },
-    { id:"energy", label:"Energy Transfer", color:"#cc88ff", desc:"Waves transfer energy without moving matter permanently. The wave moves, not the medium." },
-  ];
-
-  // Build wave path
-  const W = 560, H = 100, cx = W/2;
-  let path = `M 0 ${H/2}`;
-  for (let x = 0; x <= W; x += 2) {
-    const y = H/2 + waveAmp * Math.sin((x / W) * waveFreq * Math.PI * 2 * 2 - time * waveFreq);
-    path += ` L ${x} ${y}`;
+  // Seismic detected ~18%
+  if(t>0.18&&!seismicDetected){
+    seismicDetected=true;
+    activateSensors();
+    setDbState('s','● SIGNAL DETECTED','var(--accent)','blink');
+    setDbState('h','● PROCESSING…','var(--accent2)','blink');
   }
 
-  return (
-    <div>
-      {/* Wave diagram */}
-      <div className="panel" style={{ marginBottom:16 }}>
-        <div className="section-title">Interactive Wave Diagram</div>
-        <div style={{ display:"flex", gap:16, marginBottom:12, flexWrap:"wrap" }}>
-          <Slider label="Frequency" min={0.5} max={4} step={0.1} value={waveFreq}
-            onChange={setWaveFreq} unit=" Hz" color={C.orange}/>
-          <Slider label="Amplitude" min={10} max={45} step={1} value={waveAmp}
-            onChange={setWaveAmp} unit=" px" color={C.red}/>
-        </div>
+  // Buoy detected ~48%
+  if(t>0.48&&!buoyDetected){
+    buoyDetected=true;
+    activateBuoys();
+    setDbState('b','● TSUNAMI CONFIRMED','var(--teal)','blink');
+  }
 
-        <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ overflow:"visible" }}>
-          {/* Axes */}
-          <line x1={0} y1={H/2} x2={W} y2={H/2} stroke={C.border} strokeWidth={1}/>
-          {/* Wavelength marker */}
-          <line x1={0} y1={H/2+10} x2={W/(waveFreq*2)} y2={H/2+10} stroke={C.cyan} strokeWidth={1.5} markerEnd="url(#arr)"/>
-          <text x={W/(waveFreq*4)} y={H/2+22} textAnchor="middle" fill={C.cyan} fontSize={10}>λ</text>
-          {/* Amplitude markers */}
-          <line x1={8} y1={H/2} x2={8} y2={H/2-waveAmp} stroke={C.red} strokeWidth={1.5} strokeDasharray="3 2"/>
-          <text x={16} y={H/2-waveAmp/2} fill={C.red} fontSize={10}>A</text>
-          {/* Wave path */}
-          <path d={path} fill="none" stroke={C.teal} strokeWidth={2.5}
-            style={{ filter:`drop-shadow(0 0 4px ${C.teal})` }}/>
-          {/* Crest dot */}
-          <circle cx={W/(waveFreq*4)} cy={H/2-waveAmp} r={4} fill={C.cyan} style={{ filter:`drop-shadow(0 0 6px ${C.cyan})` }}/>
-        </svg>
+  // Warning ~55%
+  if(t>0.55&&!warningIssued){
+    warningIssued=true;
+    issueWarning();
+    setDbState('h','● HYBRID WARNING ISSUED','var(--green)','blink');
+    setDbState('a','● BROADCASTING ALERT','var(--danger)','blink');
+  }
 
-        <div className="mono" style={{ color:C.muted, fontSize:11, textAlign:"center", marginTop:8 }}>
-          v = f × λ &nbsp;·&nbsp; f = {waveFreq} Hz &nbsp;·&nbsp; T = {(1/waveFreq).toFixed(2)} s &nbsp;·&nbsp; Speed ∝ √(depth)
-        </div>
-      </div>
-
-      {/* Concept cards */}
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:12 }}>
-        {concepts.map(c => (
-          <div key={c.id} className="panel"
-            onMouseEnter={() => setHover(c.id)}
-            onMouseLeave={() => setHover(null)}
-            style={{
-              cursor:"pointer",
-              border:`1px solid ${hover===c.id ? c.color : C.border}`,
-              boxShadow: hover===c.id ? `0 0 16px ${c.color}44` : "none",
-              transition:"all 0.25s",
-              padding:12,
-            }}>
-            <div style={{ color:c.color, fontSize:10, fontFamily:"'Orbitron',monospace", letterSpacing:1, marginBottom:6 }}>
-              {c.label}
-            </div>
-            {hover===c.id ? (
-              <div style={{ fontSize:11, color:C.text, lineHeight:1.6, animation:"fadeInUp 0.2s ease" }}>
-                {c.desc}
-              </div>
-            ) : (
-              <div style={{ fontSize:10, color:C.muted }}>Hover to learn →</div>
-            )}
-          </div>
-        ))}
-      </div>
-
-      {/* Transverse vs Longitudinal */}
-      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16, marginTop:16 }}>
-        <TransverseWaveViz time={time}/>
-        <LongitudinalWaveViz time={time}/>
-      </div>
-    </div>
-  );
+  if(t<1){simAF=requestAnimationFrame(tick)}
+  else{simRunning=false;document.getElementById('btn-quake').disabled=false}
 }
 
-function TransverseWaveViz({ time }) {
-  const dots = Array.from({length:16}, (_, i) => {
-    const x = 20 + i * 32;
-    const y = 50 + 25 * Math.sin(i * 0.7 - time * 2);
-    return { x, y };
+function activateSensors(){
+  ['sbox1','sbox2'].forEach(id=>{const e=document.getElementById(id);if(e)e.classList.add('active')});
+  ['slbl1','slbl2'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.color='var(--accent)'});
+  ['ss1','ss2'].forEach(id=>{const e=document.getElementById(id);if(e){e.textContent='● ACTIVE';e.classList.add('on')}});
+}
+function activateBuoys(){
+  ['ss3','ss4'].forEach(id=>{const e=document.getElementById(id);if(e){e.textContent='● ACTIVE';e.classList.add('on','teal')}});
+  ['buoy1','buoy2'].forEach(id=>{
+    const e=document.getElementById(id);if(!e)return;
+    e.style.filter=`drop-shadow(0 0 8px var(--teal))`;
+    e.querySelectorAll('ellipse,line,circle').forEach(el=>{
+      el.setAttribute('stroke','var(--teal)');
+      if(el.tagName==='circle')el.setAttribute('fill','var(--teal)');
+    });
   });
-  return (
-    <div className="panel">
-      <div className="section-title" style={{ color:C.teal }}>Transverse Wave</div>
-      <svg width="100%" viewBox="0 0 520 100">
-        <line x1={0} y1={50} x2={520} y2={50} stroke={C.border} strokeWidth={1} strokeDasharray="4 3"/>
-        <path d={`M ${dots.map(d=>`${d.x},${d.y}`).join(" L ")}`}
-          fill="none" stroke={C.teal} strokeWidth={2}/>
-        {dots.map((d,i) => (
-          <circle key={i} cx={d.x} cy={d.y} r={4} fill={C.teal} fillOpacity={0.8}/>
-        ))}
-        <text x={10} y={14} fill={C.muted} fontSize={9} fontFamily="monospace">▶ Direction of travel</text>
-        <text x={10} y={90} fill={C.teal} fontSize={9} fontFamily="monospace">↕ Particle motion (perpendicular)</text>
-      </svg>
-    </div>
-  );
+  ['blbl1','blbl2'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.color='var(--teal)'});
+}
+function issueWarning(){
+  const wb=document.getElementById('warning-banner');if(wb)wb.classList.add('show');
+  const ab=document.getElementById('alert-box');if(ab)ab.classList.add('show');
+  const ai=document.getElementById('alert-icon');if(ai)ai.style.display='block';
+  const iw=document.getElementById('island-wrap');if(iw)iw.classList.add('shake');
+  const sa=document.getElementById('sat-alert');if(sa)sa.style.display='block';
+  const cc=document.getElementById('ctrl-ctr');
+  if(cc){cc.style.borderColor='var(--danger)';cc.style.boxShadow='0 0 18px var(--danger)55'}
+  ['bld1','bld2','bld3'].forEach(id=>{const e=document.getElementById(id);if(e)e.setAttribute('fill','var(--danger)')});
+  const ss5=document.getElementById('ss5');if(ss5){ss5.textContent='● ACTIVE';ss5.classList.add('on','danger')}
+  const adv=document.getElementById('adv-display');
+  if(adv){
+    const bd=(P.distance*.6)/(P.tsunamiSpeed/60);
+    const sd=(P.distance/(P.seismicSpeed*1000))*60;
+    adv.textContent=Math.max(0,bd-sd-2).toFixed(0);
+  }
 }
 
-function LongitudinalWaveViz({ time }) {
-  const dots = Array.from({length:20}, (_, i) => {
-    const baseX = 15 + i * 24;
-    const dx = 10 * Math.sin(i * 0.8 - time * 2);
-    return { x: baseX + dx, y: 50 };
+/* ─── WAVE ANIMATIONS ──────────────────────────────────────── */
+function startWaveAnimations(){
+  function loop(){
+    waveTime+=0.05;
+    drawTransverse();
+    drawLongitudinal();
+    waveAF=requestAnimationFrame(loop);
+  }
+  loop();
+  drawWave();
+}
+
+function drawTransverse(){
+  const svg=document.getElementById('trans-svg');if(!svg)return;
+  const pts=[];
+  for(let i=0;i<17;i++){
+    const x=16+i*31;
+    const y=50+28*Math.sin(i*.7-waveTime*2);
+    pts.push({x,y});
+  }
+  const path='M '+pts.map(p=>p.x+','+p.y).join(' L ');
+  svg.innerHTML=`
+    <line x1="0" y1="50" x2="520" y2="50" stroke="var(--border)" stroke-width="1" stroke-dasharray="4 3"/>
+    <path d="${path}" fill="none" stroke="var(--teal)" stroke-width="2.5" style="filter:drop-shadow(0 0 4px var(--teal))"/>
+    ${pts.map(p=>`<circle cx="${p.x}" cy="${p.y}" r="4" fill="var(--teal)" opacity=".8"/>`).join('')}
+    <text x="10" y="16" fill="var(--muted)" font-size="9" font-family="monospace">▶ Direction of travel</text>
+  `;
+}
+
+function drawLongitudinal(){
+  const svg=document.getElementById('long-svg');if(!svg)return;
+  const dots=[];
+  for(let i=0;i<22;i++){
+    const base=14+i*23;
+    const dx=10*Math.sin(i*.8-waveTime*2);
+    dots.push({x:base+dx,y:50});
+  }
+  svg.innerHTML=`
+    <line x1="0" y1="50" x2="520" y2="50" stroke="var(--border)" stroke-width="1" stroke-dasharray="4 3"/>
+    ${dots.map(d=>`<circle cx="${d.x}" cy="${d.y}" r="4" fill="#c8a06e" opacity=".8"/>`).join('')}
+    <text x="10" y="16" fill="var(--muted)" font-size="9" font-family="monospace">▶ Direction of travel</text>
+  `;
+}
+
+function drawWave(){
+  const svg=document.getElementById('wave-svg');if(!svg)return;
+  const f=parseFloat(document.getElementById('wf-slider').value);
+  const amp=parseFloat(document.getElementById('wa-slider').value);
+  const W=600,H=110;
+  let path='M 0 '+(H/2);
+  for(let x=0;x<=W;x+=2){
+    const y=H/2+amp*Math.sin((x/W)*f*Math.PI*2*2-waveTime*f);
+    path+=` L ${x} ${y}`;
+  }
+  const lambdaPx=W/(f*2);
+  const T=(1/f).toFixed(2);
+  const energy=Math.round(amp*amp);
+
+  document.getElementById('wv-period').textContent=T+' s';
+  document.getElementById('wv-lambda').textContent=lambdaPx.toFixed(0)+' px (relative)';
+  document.getElementById('wv-energy').textContent=energy;
+  document.getElementById('wave-formula-line').textContent=`v = fλ  ·  f = ${f} Hz  ·  T = ${T} s  ·  Energy ∝ A² = ${energy}`;
+
+  svg.innerHTML=`
+    <line x1="0" y1="${H/2}" x2="${W}" y2="${H/2}" stroke="var(--border)" stroke-width="1"/>
+    <line x1="0" y1="${H/2+12}" x2="${lambdaPx}" y2="${H/2+12}" stroke="var(--accent)" stroke-width="1.5"/>
+    <text x="${lambdaPx/2}" y="${H/2+26}" text-anchor="middle" fill="var(--accent)" font-size="10" font-family="monospace">λ</text>
+    <line x1="8" y1="${H/2}" x2="8" y2="${H/2-amp}" stroke="var(--danger)" stroke-width="1.5" stroke-dasharray="3 2"/>
+    <text x="18" y="${H/2-amp/2+4}" fill="var(--danger)" font-size="10" font-family="monospace">A</text>
+    <path d="${path}" fill="none" stroke="var(--teal)" stroke-width="2.5" style="filter:drop-shadow(0 0 5px var(--teal))"/>
+    <circle cx="${lambdaPx/2}" cy="${H/2-amp}" r="5" fill="var(--accent)" style="filter:drop-shadow(0 0 6px var(--accent))"/>
+  `;
+}
+
+/* ─── EQUATION WAVE ────────────────────────────────────────── */
+function updateEqWave(){
+  const f=parseFloat(document.getElementById('eq-freq').value);
+  const lam=parseFloat(document.getElementById('eq-lambda').value);
+  const speed=f*lam;
+  document.getElementById('eq-r-f').textContent=f.toFixed(1)+' Hz';
+  document.getElementById('eq-r-l').textContent=lam+' m';
+  document.getElementById('eq-r-v').textContent=speed+' m/s';
+  document.getElementById('eq-formula-line').innerHTML=
+    `v = f × λ = ${f.toFixed(1)} × ${lam} = <strong style="color:var(--green)">${speed} m/s</strong>&nbsp;&nbsp;·&nbsp;&nbsp;T = 1/f = ${(1/f).toFixed(3)} s&nbsp;&nbsp;·&nbsp;&nbsp;Higher f → shorter λ for same speed`;
+  drawEqWave(f,lam);
+}
+function drawEqWave(f,lam){
+  const svg=document.getElementById('eq-svg');if(!svg)return;
+  const W=600,H=130;
+  let path='M 0 '+(H/2);
+  const k=(2*Math.PI)/Math.max(lam,1);
+  const omega=2*Math.PI*f;
+  for(let x=0;x<=W;x+=2){
+    const y=H/2+38*Math.sin(k*x-omega*waveTime*.015);
+    path+=` L ${x} ${y}`;
+  }
+  const scaledLam=Math.min(lam*2.2,590);
+  svg.innerHTML=`
+    <line x1="0" y1="${H/2}" x2="${W}" y2="${H/2}" stroke="var(--border)" stroke-width="1"/>
+    <path d="${path}" fill="none" stroke="var(--teal)" stroke-width="2.5" style="filter:drop-shadow(0 0 5px var(--teal))"/>
+    <line x1="20" y1="${H-14}" x2="${20+scaledLam}" y2="${H-14}" stroke="var(--accent)" stroke-width="1.5"/>
+    <text x="${20+scaledLam/2}" y="${H-2}" text-anchor="middle" fill="var(--accent)" font-size="10" font-family="monospace">λ = ${lam}m</text>
+  `;
+}
+
+/* ─── COMPARISON ───────────────────────────────────────────── */
+const SYSTEMS={
+  seismic:{label:'System A — Seismic Only',color:'var(--accent)',stats:{cost:3,speed:9,reliability:7,falseAlarm:5,evacuation:9},
+    desc:'Detects earthquakes instantly but cannot confirm if a tsunami was generated. Very fast but moderate reliability.'},
+  buoy:{label:'System B — Buoy Only',color:'var(--teal)',stats:{cost:5,speed:5,reliability:8,falseAlarm:3,evacuation:5},
+    desc:'Confirms actual wave presence but warning comes late — the wave must reach the buoy first, costing precious minutes.'},
+  hybrid:{label:'Hybrid System — WaveGuard',color:'var(--green)',stats:{cost:7,speed:8,reliability:10,falseAlarm:2,evacuation:9},
+    desc:'Combines seismic speed with buoy confirmation. Best overall performance, fewest false alarms, maximum evacuation time.'},
+};
+const METRICS=[
+  {key:'cost',label:'Implementation Cost',invert:true},
+  {key:'speed',label:'Detection Speed'},
+  {key:'reliability',label:'Reliability'},
+  {key:'falseAlarm',label:'False Alarm Risk',invert:true},
+  {key:'evacuation',label:'Evacuation Advantage'},
+];
+
+function setCompare(mode){
+  compareMode=mode;
+  document.querySelectorAll('[id^="ct-"]').forEach(b=>b.classList.remove('active'));
+  const bt=document.getElementById('ct-'+mode);if(bt)bt.classList.add('active');
+  renderCompareBars();
+  drawRadarChart();
+}
+
+function renderCompareBars(){
+  const sys=SYSTEMS[compareMode];
+  const cd=document.getElementById('compare-detail');if(!cd)return;
+  let html=`<div class="panel-title" style="color:${sys.color}">${sys.label}</div>
+    <p style="font-size:12px;color:var(--text);line-height:1.7;margin-bottom:16px">${sys.desc}</p>`;
+  METRICS.forEach(m=>{
+    const val=sys.stats[m.key];
+    const display=m.invert?10-val:val;
+    html+=`<div class="compare-bar-wrap">
+      <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+        <span style="font-size:10px;color:var(--muted)">${m.label}</span>
+        <span style="font-family:var(--font-mono);font-size:11px;color:${sys.color}">${display}/10</span>
+      </div>
+      <div class="compare-bar-track">
+        <div class="compare-bar-fill" style="width:${display*10}%;background:linear-gradient(90deg,${sys.color}88,${sys.color})"></div>
+      </div>
+    </div>`;
   });
-  return (
-    <div className="panel">
-      <div className="section-title" style={{ color:C.orange }}>Longitudinal Wave</div>
-      <svg width="100%" viewBox="0 0 520 100">
-        <line x1={0} y1={50} x2={520} y2={50} stroke={C.border} strokeWidth={1} strokeDasharray="4 3"/>
-        {dots.map((d,i) => (
-          <circle key={i} cx={d.x} cy={d.y} r={4} fill={C.orange} fillOpacity={0.8}/>
-        ))}
-        {/* compression/rarefaction labels */}
-        <text x={10} y={14} fill={C.muted} fontSize={9} fontFamily="monospace">▶ Direction of travel</text>
-        <text x={10} y={90} fill={C.orange} fontSize={9} fontFamily="monospace">↔ Particle motion (parallel) — P-waves, Sound</text>
-      </svg>
-    </div>
-  );
+  cd.innerHTML=html;
 }
 
-// ── SECTION 6: Wave Equation Viz ─────────────────────────────────────────────
-function WaveEquationSection() {
-  const [freq, setFreq] = useState(2);
-  const [wavelength, setWavelength] = useState(80);
-  const speed = freq * wavelength;
-  const [time, setTime] = useState(0);
-  const animRef = useRef(null);
+function drawRadarChart(){
+  const svg=document.getElementById('radar-svg');if(!svg)return;
+  const cx=150,cy=130,maxR=95;
+  const n=METRICS.length;
+  let html='';
 
-  useEffect(() => {
-    const animate = () => {
-      setTime(t => t + 0.05);
-      animRef.current = requestAnimationFrame(animate);
-    };
-    animRef.current = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(animRef.current);
-  }, []);
-
-  const W = 560, H = 120;
-  let path = `M 0 ${H/2}`;
-  for (let x = 0; x <= W; x += 2) {
-    const k = (2 * Math.PI) / wavelength;
-    const omega = 2 * Math.PI * freq;
-    const y = H/2 + 35 * Math.sin(k * x - omega * time * 0.02);
-    path += ` L ${x} ${y}`;
+  // Background pentagons
+  for(let lvl=2;lvl<=10;lvl+=2){
+    const pts=Array.from({length:n},(_,i)=>{
+      const a=(i/n)*Math.PI*2-Math.PI/2;
+      const r=(lvl/10)*maxR;
+      return `${cx+r*Math.cos(a)},${cy+r*Math.sin(a)}`;
+    }).join(' ');
+    html+=`<polygon points="${pts}" fill="none" stroke="var(--border)" stroke-width=".8"/>`;
   }
 
-  return (
-    <div className="panel">
-      <div className="section-title">Wave Equation — v = fλ</div>
+  // Axis lines & labels
+  METRICS.forEach((m,i)=>{
+    const a=(i/n)*Math.PI*2-Math.PI/2;
+    const xEnd=cx+maxR*Math.cos(a), yEnd=cy+maxR*Math.sin(a);
+    const xLbl=cx+(maxR+18)*Math.cos(a), yLbl=cy+(maxR+18)*Math.sin(a);
+    html+=`<line x1="${cx}" y1="${cy}" x2="${xEnd}" y2="${yEnd}" stroke="var(--border)" stroke-width=".8"/>`;
+    html+=`<text x="${xLbl}" y="${yLbl+4}" text-anchor="middle" fill="var(--muted)" font-size="8" font-family="monospace">${m.label.split(' ')[0]}</text>`;
+  });
 
-      <div style={{ display:"flex", gap:24, alignItems:"center", marginBottom:20, flexWrap:"wrap" }}>
-        <div style={{
-          padding:"20px 32px",
-          background:C.bg, borderRadius:8, border:`1px solid ${C.border}`,
-          textAlign:"center",
-        }}>
-          <div className="orbitron" style={{
-            fontSize:36, fontWeight:900,
-            background:`linear-gradient(135deg, ${C.cyan}, ${C.teal})`,
-            WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent",
-          }}>
-            v = fλ
-          </div>
-        </div>
+  // System polygons
+  Object.entries(SYSTEMS).forEach(([key,sys])=>{
+    const vals=METRICS.map(m=>{const v=sys.stats[m.key];return m.invert?10-v:v});
+    const pts=vals.map((v,i)=>{
+      const a=(i/n)*Math.PI*2-Math.PI/2;
+      const r=(v/10)*maxR;
+      return `${cx+r*Math.cos(a)},${cy+r*Math.sin(a)}`;
+    }).join(' ');
+    const isActive=key===compareMode;
+    html+=`<polygon points="${pts}" fill="${sys.color}${isActive?'33':'11'}" stroke="${sys.color}" stroke-width="${isActive?2:1}" opacity="${isActive?1:.5}"/>`;
+  });
 
-        <div style={{ flex:1, minWidth:200 }}>
-          <Slider label="Frequency (f)" min={0.5} max={5} step={0.1} value={freq} onChange={setFreq} unit=" Hz" color={C.orange}/>
-          <Slider label="Wavelength (λ)" min={20} max={200} step={5} value={wavelength} onChange={setWavelength} unit=" m" color={C.cyan}/>
-        </div>
+  // Legend
+  Object.entries(SYSTEMS).forEach(([key,sys],i)=>{
+    html+=`<rect x="10" y="${225+i*18}" width="10" height="10" fill="${sys.color}" opacity=".7"/>`;
+    html+=`<text x="26" y="${235+i*18}" fill="${key===compareMode?sys.color:'var(--muted)'}" font-size="9" font-family="monospace">${key==='seismic'?'Seismic Only':key==='buoy'?'Buoy Only':'Hybrid (WaveGuard)'}</text>`;
+  });
 
-        <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-          {[
-            { label:"Frequency", val:`${freq} Hz`, color:C.orange },
-            { label:"Wavelength", val:`${wavelength} m`, color:C.cyan },
-            { label:"Wave Speed", val:`${speed} m/s`, color:C.green },
-          ].map(d => (
-            <div key={d.label} style={{
-              padding:"8px 16px", background:C.bg, borderRadius:6,
-              border:`1px solid ${d.color}44`, minWidth:140,
-            }}>
-              <div style={{ fontSize:9, color:C.muted, letterSpacing:1 }}>{d.label}</div>
-              <div className="mono" style={{ color:d.color, fontSize:16, fontWeight:"bold" }}>{d.val}</div>
-            </div>
-          ))}
-        </div>
+  svg.innerHTML=html;
+}
+
+/* ─── GRAPHS ───────────────────────────────────────────────── */
+function drawGraphs(){
+  drawDepthGraph();
+  drawWarningBars();
+  drawSpeedGraph();
+  // Update depth label
+  const v=Math.round(Math.sqrt(9.81*P.oceanDepth)*3.6);
+  setText('depth-graph-label',`Current: ${P.oceanDepth}m → ${v} km/h`);
+}
+
+function drawDepthGraph(){
+  const svg=document.getElementById('depth-graph');if(!svg)return;
+  const depths=[500,1000,2000,3000,4000,5000,6000,7000,8000];
+  const speeds=depths.map(d=>Math.round(Math.sqrt(9.81*d)*3.6));
+  const maxSpd=Math.max(...speeds);
+  const W=260,H=170,pL=38,pB=28,pT=12,pR=10;
+  const gW=W-pL-pR,gH=H-pB-pT;
+  const dx=d=>pL+((d-500)/(8000-500))*gW;
+  const sy=s=>pT+gH-(s/maxSpd)*gH;
+  const path=depths.map((d,i)=>(i===0?'M':'L')+' '+dx(d)+' '+sy(speeds[i])).join(' ');
+  const curV=Math.round(Math.sqrt(9.81*P.oceanDepth)*3.6);
+
+  let html=`
+    <line x1="${pL}" y1="${pT}" x2="${pL}" y2="${H-pB}" stroke="var(--border)" stroke-width="1"/>
+    <line x1="${pL}" y1="${H-pB}" x2="${W-pR}" y2="${H-pB}" stroke="var(--border)" stroke-width="1"/>
+    <text x="${W/2}" y="${H-1}" text-anchor="middle" fill="var(--muted)" font-size="8" font-family="monospace">Depth (m)</text>
+    <line x1="${dx(P.oceanDepth)}" y1="${pT}" x2="${dx(P.oceanDepth)}" y2="${H-pB}" stroke="var(--accent)" stroke-width="1" stroke-dasharray="3 2"/>
+    <path d="${path}" fill="none" stroke="var(--teal)" stroke-width="2" style="filter:drop-shadow(0 0 4px var(--teal))"/>
+    <circle cx="${dx(P.oceanDepth)}" cy="${sy(curV)}" r="5" fill="var(--accent)" style="filter:drop-shadow(0 0 8px var(--accent))"/>
+  `;
+  [500,4000,8000].forEach(d=>{html+=`<text x="${dx(d)}" y="${H-pB+10}" text-anchor="middle" fill="var(--muted)" font-size="7">${d}</text>`});
+  svg.innerHTML=html;
+}
+
+function drawWarningBars(){
+  const el=document.getElementById('warning-bars');if(!el)return;
+  const systems=[
+    {label:'Hybrid (WaveGuard)',color:'var(--green)',val:95},
+    {label:'Seismic Only',color:'var(--accent)',val:72},
+    {label:'Buoy Only',color:'var(--teal)',val:58},
+    {label:'No System',color:'var(--muted)',val:5},
+  ];
+  el.innerHTML=systems.map(s=>`
+    <div style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+        <span style="font-size:10px;color:var(--muted)">${s.label}</span>
+        <span style="font-family:var(--font-mono);font-size:10px;color:${s.color}">${s.val}%</span>
       </div>
-
-      <svg width="100%" viewBox={`0 0 ${W} ${H}`}>
-        <line x1={0} y1={H/2} x2={W} y2={H/2} stroke={C.border} strokeWidth={1}/>
-        <path d={path} fill="none" stroke={C.teal} strokeWidth={2.5}
-          style={{ filter:`drop-shadow(0 0 5px ${C.teal})` }}/>
-        {/* Wavelength annotation */}
-        <line x1={20} y1={H-12} x2={20+wavelength} y2={H-12} stroke={C.cyan} strokeWidth={1.5}/>
-        <text x={20+wavelength/2} y={H-2} textAnchor="middle" fill={C.cyan} fontSize={10} fontFamily="monospace">λ = {wavelength}m</text>
-      </svg>
-
-      <div style={{ marginTop:12, padding:12, background:C.bg, borderRadius:6, border:`1px solid ${C.border}` }}>
-        <div className="mono" style={{ color:C.text, fontSize:12 }}>
-          v = f × λ = {freq} × {wavelength} = <strong style={{color:C.green}}>{speed} m/s</strong>
-          &nbsp;&nbsp;·&nbsp;&nbsp;
-          T = 1/f = {(1/freq).toFixed(3)} s
-          &nbsp;&nbsp;·&nbsp;&nbsp;
-          Higher frequency = shorter wavelength (for same speed)
-        </div>
+      <div style="height:12px;background:var(--border);border-radius:3px;overflow:hidden">
+        <div style="height:100%;width:${s.val}%;background:linear-gradient(90deg,${s.color}88,${s.color});border-radius:3px;transition:width .5s ease"></div>
       </div>
     </div>
-  );
+  `).join('');
 }
 
-// ── SECTION 8: Comparison ────────────────────────────────────────────────────
-function ComparisonSection() {
-  const [selected, setSelected] = useState("hybrid");
-  const systems = {
-    seismic: {
-      label:"System A — Seismic Only",
-      color: C.cyan,
-      stats: { cost:3, speed:9, reliability:7, falseAlarm:5, evacuation:9 },
-      desc:"Seismic sensors alone detect earthquakes instantly but cannot confirm if a tsunami was generated. High speed but moderate reliability.",
-    },
-    buoy: {
-      label:"System B — Buoy Only",
-      color: C.teal,
-      stats: { cost:5, speed:5, reliability:8, falseAlarm:3, evacuation:5 },
-      desc:"Ocean pressure buoys confirm tsunami wave presence, but the warning comes much later as the wave must reach the buoy first.",
-    },
-    hybrid: {
-      label:"Hybrid System — WaveGuard",
-      color: C.green,
-      stats: { cost:7, speed:8, reliability:10, falseAlarm:2, evacuation:9 },
-      desc:"Combining both systems gives the speed of seismic detection with the confirmation accuracy of buoys. Best overall performance.",
-    },
-  };
-  const s = systems[selected];
-  const metrics = [
-    { key:"cost", label:"Implementation Cost", invert:true },
-    { key:"speed", label:"Detection Speed" },
-    { key:"reliability", label:"Reliability" },
-    { key:"falseAlarm", label:"False Alarm Risk", invert:true },
-    { key:"evacuation", label:"Evacuation Advantage" },
+function drawSpeedGraph(){
+  const svg=document.getElementById('speed-graph');if(!svg)return;
+  const seismicKmh=P.seismicSpeed*1000*3.6;
+  
+  const items=[
+    {label:'Seismic Wave',val:seismicKmh,color:'var(--accent)'},
+    {label:'Tsunami Wave',val:P.tsunamiSpeed,color:'var(--teal)'},
+    {label:'Sound in Water',val:5400,color:'var(--muted)'},
   ];
-
-  return (
-    <div>
-      <div style={{ display:"flex", gap:12, marginBottom:20 }}>
-        {Object.entries(systems).map(([key, sys]) => (
-          <button key={key}
-            className={`tab-btn ${selected===key?"active":""}`}
-            onClick={() => setSelected(key)}
-            style={{ flex:1, padding:"10px", fontSize:10,
-              borderColor: selected===key ? sys.color : C.border,
-              color: selected===key ? sys.color : C.muted,
-            }}>
-            {sys.label}
-          </button>
-        ))}
-      </div>
-
-      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16 }}>
-        <div className="panel">
-          <div className="section-title" style={{ color:s.color }}>{s.label}</div>
-          <p style={{ fontSize:12, color:C.text, lineHeight:1.7, marginBottom:16 }}>{s.desc}</p>
-          {metrics.map(m => {
-            const val = s.stats[m.key];
-            const display = m.invert ? 10 - val : val;
-            const pct = display * 10;
-            return (
-              <div key={m.key} style={{ marginBottom:10 }}>
-                <div style={{ display:"flex", justifyContent:"space-between", marginBottom:3 }}>
-                  <span style={{ fontSize:10, color:C.muted }}>{m.label}</span>
-                  <span className="mono" style={{ fontSize:11, color:s.color }}>{display}/10</span>
-                </div>
-                <div className="threat-bar">
-                  <div className="threat-fill" style={{
-                    width:`${pct}%`,
-                    background:`linear-gradient(90deg, ${s.color}88, ${s.color})`,
-                    transition:"width 0.5s ease",
-                  }}/>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Radar chart comparison */}
-        <div className="panel">
-          <div className="section-title">All Systems — Comparison</div>
-          <svg width="100%" viewBox="0 0 300 280">
-            {/* Background pentagons */}
-            {[2,4,6,8,10].map(lvl => (
-              <polygon key={lvl} points={pentagonPoints(150, 120, lvl/10*90)}
-                fill="none" stroke={C.border} strokeWidth={0.8}/>
-            ))}
-            {/* Axis labels */}
-            {metrics.map((m, i) => {
-              const angle = (i / metrics.length) * Math.PI * 2 - Math.PI / 2;
-              const r = 110;
-              const x = 150 + r * Math.cos(angle);
-              const y = 120 + r * Math.sin(angle);
-              return (
-                <text key={m.key} x={x} y={y} textAnchor="middle"
-                  fill={C.muted} fontSize={8} fontFamily="monospace"
-                  dy={i===0?-4:i===3||i===4?12:4}>
-                  {m.label.split(" ")[0]}
-                </text>
-              );
-            })}
-            {/* System polygons */}
-            {Object.entries(systems).map(([key, sys]) => {
-              const vals = metrics.map(m => {
-                const v = sys.stats[m.key];
-                return m.invert ? 10 - v : v;
-              });
-              return (
-                <polygon key={key} points={radarPoints(150, 120, vals, 90)}
-                  fill={sys.color + (key===selected?"33":"11")}
-                  stroke={sys.color}
-                  strokeWidth={key===selected ? 2 : 1}
-                  strokeOpacity={key===selected ? 1 : 0.5}/>
-              );
-            })}
-            {/* Legend */}
-            {Object.entries(systems).map(([key, sys], i) => (
-              <g key={key}>
-                <rect x={10} y={220+i*18} width={10} height={10} fill={sys.color} fillOpacity={0.7}/>
-                <text x={26} y={230+i*18} fill={key===selected ? sys.color : C.muted} fontSize={9} fontFamily="monospace">
-                  {key==="seismic"?"Seismic Only":key==="buoy"?"Buoy Only":"Hybrid (WaveGuard)"}
-                </text>
-              </g>
-            ))}
-          </svg>
-        </div>
-      </div>
-    </div>
-  );
+  let html='';
+  items.forEach((item,i)=>{
+    const barW=Math.min((item.val/Math.max(seismicKmh,10000))*230,230);
+    const y=24+i*48;
+    const label=item.val>999?`${(item.val/1000).toFixed(1)}k km/h`:`${item.val} km/h`;
+    html+=`
+      <text x="10" y="${y}" fill="${item.color}" font-size="9" font-family="monospace">${item.label}</text>
+      <rect x="10" y="${y+8}" width="${barW}" height="20" rx="3" fill="${item.color}" opacity=".3"/>
+      <rect x="10" y="${y+8}" width="${barW}" height="4" rx="2" fill="${item.color}"/>
+      <text x="${16+barW}" y="${y+22}" fill="${item.color}" font-size="8" font-family="monospace">${label}</text>
+    `;
+  });
+  const ratio=Math.round(seismicKmh/Math.max(P.tsunamiSpeed,1));
+  html+=`<text x="10" y="162" fill="var(--muted)" font-size="8" font-family="monospace">Seismic ≈ ${ratio}× faster than tsunami</text>`;
+  svg.innerHTML=html;
 }
 
-function pentagonPoints(cx, cy, r) {
-  return Array.from({length:5}, (_, i) => {
-    const a = (i/5)*Math.PI*2 - Math.PI/2;
-    return `${cx+r*Math.cos(a)},${cy+r*Math.sin(a)}`;
-  }).join(" ");
-}
-function radarPoints(cx, cy, vals, maxR) {
-  const n = vals.length;
-  return vals.map((v, i) => {
-    const a = (i/n)*Math.PI*2 - Math.PI/2;
-    const r = (v/10)*maxR;
-    return `${cx+r*Math.cos(a)},${cy+r*Math.sin(a)}`;
-  }).join(" ");
-}
+/* ─── LIVE WAVE LOOP ───────────────────────────────────────── */
+setInterval(()=>{
+  if(document.getElementById('sec-wave').classList.contains('active')){
+    drawWave();
+  }
+  if(document.getElementById('sec-equation').classList.contains('active')){
+    const f=parseFloat(document.getElementById('eq-freq').value);
+    const lam=parseFloat(document.getElementById('eq-lambda').value);
+    drawEqWave(f,lam);
+  }
+},50);
 
-// ── SECTION 9: Graphs ────────────────────────────────────────────────────────
-function GraphsSection({ params }) {
-  const depths = [500,1000,2000,3000,4000,5000,6000,7000,8000];
-  const speeds = depths.map(d => Math.round(Math.sqrt(9.81*d)*3.6));
-  const maxSpeed = Math.max(...speeds);
-
-  const W = 260, H = 160, padL = 36, padB = 28, padT = 12, padR = 8;
-  const gW = W-padL-padR, gH = H-padB-padT;
-
-  const depthToX = d => padL + ((d-500)/(8000-500))*gW;
-  const speedToY = s => padT + gH - (s/maxSpeed)*gH;
-
-  const linePath = depths.map((d,i) => `${i===0?"M":"L"} ${depthToX(d)} ${speedToY(speeds[i])}`).join(" ");
-
-  const systems = [
-    { label:"Hybrid (WaveGuard)", color:C.green, val: 95 },
-    { label:"Seismic Only", color:C.cyan, val: 72 },
-    { label:"Buoy Only", color:C.teal, val: 58 },
-    { label:"No System", color:C.muted, val: 5 },
-  ];
-
-  return (
-    <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:16 }}>
-      {/* Graph 1: Tsunami speed vs depth */}
-      <div className="panel">
-        <div className="section-title">Tsunami Speed vs Ocean Depth</div>
-        <svg width="100%" viewBox={`0 0 ${W} ${H}`} className="graph-grid">
-          {/* Axes */}
-          <line x1={padL} y1={padT} x2={padL} y2={H-padB} stroke={C.border} strokeWidth={1}/>
-          <line x1={padL} y1={H-padB} x2={W-padR} y2={H-padB} stroke={C.border} strokeWidth={1}/>
-          {/* Labels */}
-          <text x={W/2} y={H-2} textAnchor="middle" fill={C.muted} fontSize={8} fontFamily="monospace">Depth (m)</text>
-          <text x={10} y={H/2} textAnchor="middle" fill={C.muted} fontSize={8} fontFamily="monospace"
-            transform={`rotate(-90, 10, ${H/2})`}>Speed (km/h)</text>
-          {/* Current depth line */}
-          <line x1={depthToX(params.oceanDepth)} y1={padT}
-            x2={depthToX(params.oceanDepth)} y2={H-padB}
-            stroke={C.cyan} strokeWidth={1} strokeDasharray="3 2"/>
-          {/* Data line */}
-          <path d={linePath} fill="none" stroke={C.teal} strokeWidth={2}
-            style={{ filter:`drop-shadow(0 0 4px ${C.teal})` }}/>
-          {/* Current depth dot */}
-          <circle
-            cx={depthToX(params.oceanDepth)}
-            cy={speedToY(Math.round(Math.sqrt(9.81*params.oceanDepth)*3.6))}
-            r={4} fill={C.cyan}/>
-          {/* Tick labels */}
-          {[500,4000,8000].map(d => (
-            <text key={d} x={depthToX(d)} y={H-padB+10} textAnchor="middle" fill={C.muted} fontSize={7}>{d}</text>
-          ))}
-        </svg>
-        <div className="mono" style={{ fontSize:10, color:C.cyan, textAlign:"center", marginTop:4 }}>
-          Current: {params.oceanDepth}m → {Math.round(Math.sqrt(9.81*params.oceanDepth)*3.6)} km/h
-        </div>
-      </div>
-
-      {/* Graph 2: Warning time comparison bar chart */}
-      <div className="panel">
-        <div className="section-title">Warning Time Advantage</div>
-        <div style={{ display:"flex", flexDirection:"column", gap:10, marginTop:8 }}>
-          {systems.map(s => (
-            <div key={s.label}>
-              <div style={{ display:"flex", justifyContent:"space-between", marginBottom:3 }}>
-                <span style={{ fontSize:9, color:C.muted }}>{s.label}</span>
-                <span className="mono" style={{ fontSize:10, color:s.color }}>{s.val}%</span>
-              </div>
-              <div style={{ height:12, background:C.border, borderRadius:2, overflow:"hidden" }}>
-                <div style={{
-                  height:"100%", width:`${s.val}%`,
-                  background:`linear-gradient(90deg, ${s.color}88, ${s.color})`,
-                  transition:"width 0.5s ease",
-                  borderRadius:2,
-                }}/>
-              </div>
-            </div>
-          ))}
-        </div>
-        <div style={{ marginTop:12, fontSize:10, color:C.muted, textAlign:"center" }}>
-          Effective evacuation rate at current parameters
-        </div>
-      </div>
-
-      {/* Graph 3: Seismic vs Tsunami speed comparison */}
-      <div className="panel">
-        <div className="section-title">Signal Travel Speed</div>
-        <svg width="100%" viewBox="0 0 260 160">
-          {[
-            { label:"Seismic Wave", val: params.seismicSpeed * 1000 * 3.6, max: 30000, color:C.cyan },
-            { label:"Tsunami Wave", val: params.tsunamiSpeed, max: 30000, color:C.teal },
-            { label:"Sound in water", val: 5400, max: 30000, color:C.muted },
-          ].map((item, i) => {
-            const barW = (item.val / item.max) * 200;
-            const y = 30 + i * 44;
-            return (
-              <g key={item.label}>
-                <text x={10} y={y} fill={item.color} fontSize={9} fontFamily="monospace">{item.label}</text>
-                <rect x={10} y={y+8} width={barW} height={20} rx={3}
-                  fill={item.color} fillOpacity={0.4}/>
-                <rect x={10} y={y+8} width={barW} height={4} rx={2}
-                  fill={item.color}/>
-                <text x={16+barW} y={y+22} fill={item.color} fontSize={8} fontFamily="monospace">
-                  {item.val > 1000 ? `${(item.val/1000).toFixed(1)}k` : item.val} km/h
-                </text>
-              </g>
-            );
-          })}
-          <text x={10} y={155} fill={C.muted} fontSize={8} fontFamily="monospace">
-            Seismic waves are ~{Math.round(params.seismicSpeed*1000*3.6/params.tsunamiSpeed)}× faster than tsunamis
-          </text>
-        </svg>
-      </div>
-    </div>
-  );
-}
-
-// ── SECTION 10: Public Safety ────────────────────────────────────────────────
-function PublicSafetySection() {
-  const steps = [
-    { icon:"📻", title:"Hear the Alert", desc:"Listen for official warnings via radio, TV, sirens, or mobile alerts. Do not wait to see the wave." },
-    { icon:"🏃", title:"Move Immediately", desc:"Go to high ground or inland. Move at least 1 mile from the coast or to a height of 100 feet above sea level." },
-    { icon:"🚗", title:"Follow Evacuation Routes", desc:"Use designated evacuation routes. Avoid bridges and low-lying roads near water." },
-    { icon:"📱", title:"Stay Informed", desc:"Monitor official emergency channels. A tsunami can have multiple waves — the first may not be the largest." },
-    { icon:"⏳", title:"Wait for All-Clear", desc:"Do NOT return until authorities give the official all-clear. The threat can last several hours." },
-    { icon:"🤝", title:"Help Others", desc:"Help neighbours, especially elderly or disabled people. Alert others if you can do so safely." },
-  ];
-
-  return (
-    <div>
-      <div style={{
-        padding:"20px 24px", marginBottom:20,
-        background:`linear-gradient(135deg, ${C.red}11, ${C.orange}11)`,
-        border:`1px solid ${C.red}44`, borderRadius:8,
-        display:"flex", alignItems:"center", gap:20,
-      }}>
-        <div style={{ fontSize:48 }}>⚠️</div>
-        <div>
-          <div className="orbitron" style={{ color:C.red, fontSize:14, letterSpacing:2, marginBottom:6 }}>
-            PUBLIC TSUNAMI SAFETY GUIDE
-          </div>
-          <div style={{ fontSize:13, color:C.text, maxWidth:600, lineHeight:1.6 }}>
-            If you receive a tsunami warning, you have minutes to act. Every second counts.
-            This guide uses the same science from WaveGuard's hybrid detection system to help you survive.
-          </div>
-        </div>
-      </div>
-
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:16, marginBottom:20 }}>
-        {steps.map((step, i) => (
-          <div key={i} className="panel" style={{ textAlign:"center" }}>
-            <div style={{ fontSize:36, marginBottom:8 }}>{step.icon}</div>
-            <div style={{ marginBottom:4 }}>
-              <span className="orbitron" style={{ color:C.cyan, fontSize:9, letterSpacing:2 }}>
-                STEP {i+1}
-              </span>
-            </div>
-            <div className="orbitron" style={{ color:C.text, fontSize:11, marginBottom:8 }}>{step.title}</div>
-            <div style={{ fontSize:11, color:C.muted, lineHeight:1.6 }}>{step.desc}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* Alert example */}
-      <div className="panel" style={{ borderColor:C.orange, background:`${C.orange}0a` }}>
-        <div className="section-title" style={{ color:C.orange }}>Example Emergency Alert</div>
-        <div style={{
-          background:C.bg, borderRadius:6, padding:16,
-          border:`1px solid ${C.orange}33`,
-          fontFamily:"'Share Tech Mono',monospace",
-        }}>
-          <div style={{ color:C.orange, fontSize:13, marginBottom:8 }}>
-            🚨 OFFICIAL TSUNAMI WARNING — OPERATION WAVEGUARD
-          </div>
-          <div style={{ color:C.text, fontSize:11, lineHeight:1.8 }}>
-            ISSUED: {new Date().toUTCString()}<br/>
-            AFFECTED AREA: Wavara Coastal Zone (all areas below 30m elevation)<br/>
-            THREAT LEVEL: HIGH — Estimated Wave Height: 3–8 metres<br/>
-            ESTIMATED ARRIVAL: 22 MINUTES<br/>
-          
+/* ─── INIT ─────────────────────────────────────────────────── */
+updateLiveCalcs();
+</script>
+</body>
+</html>
