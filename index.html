@@ -1422,30 +1422,187 @@ input[type=password]:focus,input[type=text]:focus{border-color:var(--teal)}
 ══════════════════════════════════════════════════════════════════════ */
 const LOCK_PASS = 'RIPTIDE';
 const OMK_PASS  = 'LEVIATHAN;
+const LEVEL5_PASS = 'ABYSS-7';
+
+let failedAttempts = 0;
+let lockdown = false;
+let level5Used = false;
 
 function checkLock() {
+
   const v = document.getElementById('lock-input').value.trim().toUpperCase();
+
   if (v === LOCK_PASS) {
+
     const panel = document.getElementById('lock-panel');
+
     panel.style.animation = 'lockReveal .5s ease forwards';
+
     setTimeout(() => {
       document.getElementById('lock-screen').style.display = 'none';
       document.getElementById('loading-screen').style.display = 'flex';
       startLoading();
     }, 500);
+
   } else {
+
+    failedAttempts++;
+
     const err = document.getElementById('lock-error');
-    err.textContent = 'Invalid access code. Try again.';
+
+    err.textContent =
+      `Invalid access code. Attempt ${failedAttempts}/3`;
+
     err.style.opacity = '1';
+
     const panel = document.getElementById('lock-panel');
+
     panel.style.animation = 'shake .5s ease';
-    setTimeout(() => { panel.style.animation = ''; }, 520);
-    setTimeout(() => { err.style.opacity = '0'; }, 3000);
+
+    setTimeout(() => {
+      panel.style.animation = '';
+    }, 520);
+
+    setTimeout(() => {
+      err.style.opacity = '0';
+    }, 3000);
+
     document.getElementById('lock-input').value = '';
+
     document.getElementById('lock-input').focus();
+
+    if (failedAttempts >= 3) {
+      activateLockdown();
+    }
   }
 }
 document.getElementById('lock-input').addEventListener('keydown', e => { if (e.key === 'Enter') checkLock(); });
+
+function activateLockdown() {
+
+  document.body.innerHTML = `
+    <div style="
+      background:black;
+      color:red;
+      width:100vw;
+      height:100vh;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      align-items:center;
+      font-family:Arial,sans-serif;
+      text-align:center;
+    ">
+
+      <h1 style="
+        font-size:3rem;
+        margin-bottom:20px;
+        letter-spacing:4px;
+      ">
+        SECURITY LOCKDOWN ACTIVATED
+      </h1>
+
+      <p style="margin-bottom:10px">
+        UNAUTHORIZED ACCESS DETECTED
+      </p>
+
+      <p style="
+        margin-bottom:30px;
+        color:#ff5555;
+      ">
+        LEVEL 5 CLEARANCE REQUIRED
+      </p>
+
+      <input
+        id="level5Input"
+        type="password"
+        placeholder="ENTER LEVEL 5 CODE"
+        style="
+          padding:15px;
+          width:300px;
+          background:#111;
+          border:2px solid red;
+          color:white;
+          font-size:1rem;
+          text-align:center;
+        "
+      >
+
+      <button
+        onclick="checkLevel5()"
+        style="
+          margin-top:20px;
+          padding:14px 30px;
+          background:red;
+          color:white;
+          border:none;
+          font-size:1rem;
+          cursor:pointer;
+        "
+      >
+        OVERRIDE LOCKDOWN
+      </button>
+
+      <div
+        id="level5Msg"
+        style="margin-top:20px"
+      ></div>
+
+    </div>
+  `;
+}
+
+function checkLevel5() {
+
+  if (level5Used) return;
+
+  level5Used = true;
+
+  const val =
+    document.getElementById('level5Input')
+    .value
+    .trim()
+    .toUpperCase();
+
+  const msg =
+    document.getElementById('level5Msg');
+
+  if (val === LEVEL5_PASS) {
+
+    msg.innerHTML = `
+      <span style="
+        color:lime;
+        font-size:1.2rem;
+      ">
+        LEVEL 5 CLEARANCE ACCEPTED
+      </span>
+    `;
+
+    setTimeout(() => {
+      location.reload();
+    }, 1500);
+
+  } else {
+
+    document.body.innerHTML = `
+      <div style="
+        background:black;
+        color:red;
+        width:100vw;
+        height:100vh;
+        display:flex;
+        flex-direction:column;
+        justify-content:center;
+        align-items:center;
+        font-family:Arial,sans-serif;
+        text-align:center;
+      ">
+        <h1>ACCESS PERMANENTLY DENIED</h1>
+        <p>SESSION TERMINATED</p>
+      </div>
+    `;
+  }
+}
 
 function checkOmk() {
   const v = document.getElementById('omk-input').value.trim().toUpperCase();
@@ -2315,3 +2472,4 @@ function initApp() {
 </script>
 </body>
 </html>
+
