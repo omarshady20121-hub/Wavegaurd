@@ -1476,7 +1476,133 @@ function checkLock() {
     }
   }
 }
+
 document.getElementById('lock-input').addEventListener('keydown', e => { if (e.key === 'Enter') checkLock(); });
+function activateLockdown() {
+
+  document.body.innerHTML = `
+    <div style="
+      background:black;
+      color:red;
+      width:100vw;
+      height:100vh;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      align-items:center;
+      font-family:Arial,sans-serif;
+      text-align:center;
+    ">
+
+      <h1 style="
+        font-size:3rem;
+        margin-bottom:20px;
+        letter-spacing:4px;
+      ">
+        SECURITY LOCKDOWN ACTIVATED
+      </h1>
+
+      <p style="margin-bottom:10px">
+        UNAUTHORIZED ACCESS DETECTED
+      </p>
+
+      <p style="
+        margin-bottom:30px;
+        color:#ff5555;
+      ">
+        LEVEL 5 CLEARANCE REQUIRED
+      </p>
+
+      <input
+        id="level5Input"
+        type="password"
+        placeholder="ENTER LEVEL 5 CODE"
+        style="
+          padding:15px;
+          width:300px;
+          background:#111;
+          border:2px solid red;
+          color:white;
+          font-size:1rem;
+          text-align:center;
+        "
+      >
+
+      <button
+        onclick="checkLevel5()"
+        style="
+          margin-top:20px;
+          padding:14px 30px;
+          background:red;
+          color:white;
+          border:none;
+          font-size:1rem;
+          cursor:pointer;
+        "
+      >
+        OVERRIDE LOCKDOWN
+      </button>
+
+      <div
+        id="level5Msg"
+        style="margin-top:20px"
+      ></div>
+
+    </div>
+  `;
+}
+
+function checkLevel5() {
+
+  if (level5Used) return;
+
+  level5Used = true;
+
+  const val =
+    document.getElementById('level5Input')
+    .value
+    .trim()
+    .toUpperCase();
+
+  const msg =
+    document.getElementById('level5Msg');
+
+  if (val === LEVEL5_PASS) {
+
+    msg.innerHTML = `
+      <span style="
+        color:lime;
+        font-size:1.2rem;
+      ">
+        LEVEL 5 CLEARANCE ACCEPTED
+      </span>
+    `;
+
+    setTimeout(() => {
+      location.reload();
+    }, 1500);
+
+  } else {
+
+    document.body.innerHTML = `
+      <div style="
+        background:black;
+        color:red;
+        width:100vw;
+        height:100vh;
+        display:flex;
+        flex-direction:column;
+        justify-content:center;
+        align-items:center;
+        font-family:Arial,sans-serif;
+        text-align:center;
+      ">
+        <h1>ACCESS PERMANENTLY DENIED</h1>
+        <p>SESSION TERMINATED</p>
+      </div>
+    `;
+  }
+}
 
 function activateLockdown() {
 
