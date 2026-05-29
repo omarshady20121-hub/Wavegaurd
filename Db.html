@@ -1,0 +1,2227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Operation WaveGuard — WAVARA Defense Network</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#081018;
+  --panel:#111827;
+  --panel2:#1b2a3a;
+  --border:#243447;
+  --border2:#2e4460;
+  --accent:#315c67;
+  --blue:#3b82f6;
+  --blue2:#2563eb;
+  --seafoam:#7dd3c7;
+  --seafoam2:#5bc0be;
+  --red:#dc2626;
+  --red2:#ef4444;
+  --amber:#f59e0b;
+  --amber2:#fbbf24;
+  --green:#10b981;
+  --green2:#34d399;
+  --text:#e5eef5;
+  --muted:#9fb3c8;
+  --muted2:#7a96ae;
+  --gold:#c9a84c;
+  --deep:#040c14;
+}
+html,body{width:100%;overflow-x:hidden;min-height:100vh}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;line-height:1.5}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+button{font-family:inherit;cursor:pointer;border:none;outline:none}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:3px;background:var(--border);border-radius:2px;outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--seafoam);cursor:pointer;border:2px solid var(--bg)}
+input[type=password],input[type=text]{background:rgba(8,16,24,.9);border:1px solid var(--border2);color:var(--text);padding:13px 18px;border-radius:6px;font-size:15px;outline:none;width:100%;transition:border .2s,box-shadow .2s;letter-spacing:1px}
+input[type=password]:focus,input[type=text]:focus{border-color:var(--seafoam);box-shadow:0 0 0 3px rgba(125,211,199,.08)}
+
+/* ─── KEYFRAMES ─── */
+@keyframes waveScroll{from{background-position-x:0}to{background-position-x:300px}}
+@keyframes waveDrift{0%{transform:translateX(0) scaleY(1)}50%{transform:translateX(-20px) scaleY(1.08)}100%{transform:translateX(0) scaleY(1)}}
+@keyframes floatBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes pulseRing{0%{transform:scale(.6);opacity:.9}100%{transform:scale(2.8);opacity:0}}
+@keyframes radarSweep{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes blinkAlert{0%,100%{opacity:1}50%{opacity:.1}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(7px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes scanline{0%{top:-5%}100%{top:105%}}
+@keyframes starTwinkle{0%,100%{opacity:.15}50%{opacity:.85}}
+@keyframes lockReveal{from{opacity:1;transform:scale(1)}to{opacity:0;transform:scale(1.04)}}
+@keyframes dashIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes seismicPulse{0%{r:4;opacity:1}100%{r:80;opacity:0}}
+@keyframes typewriter{from{width:0}to{width:100%}}
+@keyframes breathe{0%,100%{opacity:.6}50%{opacity:1}}
+@keyframes ambientGlow{0%,100%{box-shadow:0 0 40px rgba(49,92,103,.15),0 0 80px rgba(49,92,103,.06)}50%{box-shadow:0 0 60px rgba(125,211,199,.2),0 0 120px rgba(59,130,246,.08)}}
+@keyframes oceanDepth{0%{background-position:0 0}100%{background-position:60px 60px}}
+@keyframes buoyBob{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-8px) rotate(1deg)}}
+@keyframes tridentPulse{0%,100%{opacity:.5;filter:drop-shadow(0 0 2px var(--seafoam))}50%{opacity:.9;filter:drop-shadow(0 0 8px var(--seafoam))}}
+
+/* ─── PANELS ─── */
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:16px;position:relative;overflow:hidden}
+.panel::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(125,211,199,.25),transparent)}
+.panel2{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:16px;position:relative;overflow:hidden}
+.glass{background:rgba(11,20,32,.72);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid rgba(36,52,71,.8);border-radius:14px}
+.glass-light{background:rgba(27,42,58,.55);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid var(--border);border-radius:10px}
+
+/* ─── SEC TITLE ─── */
+.sec-title{font-size:9px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--seafoam);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.sec-title::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(125,211,199,.2),transparent)}
+.sec-title-red{color:var(--red2)}
+.sec-title-amber{color:var(--amber)}
+.sec-title-blue{color:var(--blue)}
+
+/* ─── BUTTONS ─── */
+.btn-primary{background:linear-gradient(135deg,rgba(49,92,103,.35),rgba(59,130,246,.2));border:1px solid var(--seafoam2);color:var(--seafoam);padding:12px 28px;border-radius:8px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;font-size:12px;transition:all .3s;box-shadow:0 2px 20px rgba(125,211,199,.1)}
+.btn-primary:hover{background:linear-gradient(135deg,rgba(91,192,190,.28),rgba(59,130,246,.3));box-shadow:0 4px 30px rgba(125,211,199,.22);transform:translateY(-2px)}
+.btn-primary:disabled{opacity:.35;cursor:not-allowed;transform:none}
+.btn-danger{background:linear-gradient(135deg,rgba(220,38,38,.18),rgba(220,38,38,.08));border:1px solid rgba(239,68,68,.55);color:var(--red2);padding:10px 22px;border-radius:8px;font-weight:600;letter-spacing:1.5px;font-size:11px;transition:all .25s}
+.btn-danger:hover{background:rgba(239,68,68,.22);box-shadow:0 0 20px rgba(220,38,38,.25)}
+.btn-danger:disabled{opacity:.35;cursor:not-allowed}
+.tab-btn{background:transparent;border:1px solid var(--border);color:var(--muted);padding:7px 14px;border-radius:6px;font-size:9px;letter-spacing:1px;text-transform:uppercase;font-weight:600;transition:all .2s}
+.tab-btn:hover{border-color:var(--seafoam2);color:var(--seafoam)}
+.tab-btn.active{background:rgba(91,192,190,.12);border-color:var(--seafoam2);color:var(--seafoam);box-shadow:0 0 12px rgba(91,192,190,.12)}
+
+/* ─── BARS ─── */
+.threat-bar{height:6px;border-radius:3px;background:rgba(36,52,71,.8);overflow:hidden}
+.threat-fill{height:100%;border-radius:3px;transition:width .6s ease,background .5s}
+.prog-bar{height:4px;background:var(--border);border-radius:2px;overflow:hidden}
+.prog-fill{height:100%;border-radius:2px;transition:width .15s linear}
+
+/* ─── NAV ─── */
+#navbar{position:sticky;top:0;z-index:200;background:rgba(8,16,24,.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:2px;padding:6px 20px;overflow-x:auto}
+.nav-link{background:none;border:none;color:var(--muted);padding:7px 12px;border-radius:5px;font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;transition:all .2s;white-space:nowrap}
+.nav-link:hover{color:var(--seafoam);background:rgba(91,192,190,.07)}
+.nav-link.active{color:var(--seafoam);background:rgba(91,192,190,.1)}
+
+/* ─── OCEAN VISUAL ─── */
+.ocean-wave-bg{background:linear-gradient(90deg,transparent,rgba(49,92,103,.22) 25%,rgba(125,211,199,.3) 50%,rgba(49,92,103,.22) 75%,transparent);background-size:300px 100%;animation:waveScroll 3s linear infinite}
+
+/* ─── CLEARANCE BADGES ─── */
+.clearance-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:3px;font-size:8px;font-weight:700;letter-spacing:2px;text-transform:uppercase}
+.lvl-1{background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);color:var(--green)}
+.lvl-3{background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.3);color:var(--blue)}
+.lvl-5{background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.3);color:var(--amber)}
+.lvl-sci{background:rgba(125,211,199,.1);border:1px solid rgba(125,211,199,.3);color:var(--seafoam)}
+
+/* ─── GRIDS ─── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media(max-width:900px){.g3{grid-template-columns:1fr 1fr}.g4{grid-template-columns:1fr 1fr}#sim-grid{grid-template-columns:1fr!important}}
+@media(max-width:600px){.g2,.g3,.g4{grid-template-columns:1fr}}
+
+/* ─── GRAPH GRID ─── */
+.gg{background-image:linear-gradient(rgba(36,52,71,.6) 1px,transparent 1px),linear-gradient(90deg,rgba(36,52,71,.6) 1px,transparent 1px);background-size:36px 36px}
+
+/* ─── SCIENTIST CARDS ─── */
+.sci-card{background:linear-gradient(135deg,var(--panel2),var(--panel));border:1px solid var(--border);border-radius:12px;padding:20px;position:relative;overflow:hidden;transition:all .3s}
+.sci-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--seafoam2),transparent)}
+.sci-card:hover{border-color:var(--seafoam2);box-shadow:0 0 24px rgba(91,192,190,.1);transform:translateY(-2px)}
+.sci-avatar{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;border:2px solid var(--border2);background:linear-gradient(135deg,var(--panel),var(--panel2))}
+
+/* ─── SENSOR DOT ─── */
+.sensor-dot{width:8px;height:8px;border-radius:50%;background:var(--border2);display:inline-block;transition:all .3s}
+.sensor-dot.active-s{background:var(--seafoam);box-shadow:0 0 8px var(--seafoam)}
+.sensor-dot.active-b{background:var(--blue);box-shadow:0 0 8px var(--blue)}
+.sensor-dot.active-w{background:var(--amber);box-shadow:0 0 8px var(--amber);animation:blinkAlert .7s step-end infinite}
+
+/* ─── OMK TAB CONTENT ─── */
+.omk-content{display:none}.omk-content.active{display:block}
+
+/* ─── MISC ─── */
+.mono{font-family:'Courier New',Courier,monospace}
+.page{display:none}
+.page.active{display:block;animation:fadeIn .35s ease}
+#lock-screen,#omk-lock-screen{position:fixed;inset:0;z-index:9999;overflow:hidden;background:var(--deep)}
+#loading-screen{position:fixed;inset:0;z-index:9998;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center}
+#omk-overlay{position:fixed;inset:0;z-index:8000;background:rgba(4,8,16,.97);display:none;overflow-y:auto}
+.wrap{max-width:1240px;margin:0 auto;padding:36px 20px}
+.section-head{display:flex;align-items:center;gap:12px;margin-bottom:26px}
+.section-head h2{color:var(--seafoam);font-size:18px;font-weight:800;letter-spacing:3px;text-transform:uppercase}
+.section-head::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(125,211,199,.25),transparent)}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- LOCK SCREEN                                                    -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div id="lock-screen">
+  <!-- Stars -->
+  <div id="lock-stars" style="position:absolute;inset:0;pointer-events:none;z-index:1"></div>
+
+  <!-- Ocean background layers -->
+  <div style="position:absolute;inset:0;z-index:0;background:radial-gradient(ellipse at 50% 40%,#0a1e34 0%,#040c14 60%,#020a12 100%)"></div>
+  <div style="position:absolute;inset:0;z-index:0;background-image:linear-gradient(rgba(36,52,71,.18) 1px,transparent 1px),linear-gradient(90deg,rgba(36,52,71,.18) 1px,transparent 1px);background-size:55px 55px;opacity:.7"></div>
+
+  <!-- Animated ocean waves SVG -->
+  <svg style="position:absolute;bottom:0;left:0;width:100%;z-index:2" viewBox="0 0 1440 280" preserveAspectRatio="none" height="260">
+    <defs>
+      <linearGradient id="wg" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#0d2e4d" stop-opacity=".7"/>
+        <stop offset="100%" stop-color="#020c18" stop-opacity="1"/>
+      </linearGradient>
+      <linearGradient id="wg2" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#1a3f60" stop-opacity=".4"/>
+        <stop offset="100%" stop-color="#020c18" stop-opacity="1"/>
+      </linearGradient>
+    </defs>
+    <path fill="url(#wg)" d="M0,100 C240,55 480,165 720,100 C960,35 1200,145 1440,100 L1440,280 L0,280 Z" style="animation:waveDrift 6s ease-in-out infinite"/>
+    <path fill="url(#wg2)" d="M0,130 C300,80 600,190 900,130 C1100,90 1300,150 1440,120 L1440,280 L0,280 Z" style="animation:waveDrift 8s ease-in-out infinite reverse"/>
+    <path fill="rgba(125,211,199,.06)" d="M0,155 C360,110 720,200 1080,155 L1440,155 L1440,280 L0,280 Z" style="animation:waveDrift 10s ease-in-out infinite"/>
+  </svg>
+
+  <!-- Scan line -->
+  <div id="lock-scanline" style="position:absolute;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(125,211,199,.4),transparent);z-index:3;pointer-events:none;animation:scanline 4s linear infinite"></div>
+
+  <!-- Radar circle (large, background) -->
+  <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-55%);z-index:2;pointer-events:none">
+    <svg width="600" height="600" viewBox="0 0 600 600" opacity=".07">
+      <circle cx="300" cy="300" r="280" fill="none" stroke="var(--seafoam)" stroke-width="1"/>
+      <circle cx="300" cy="300" r="200" fill="none" stroke="var(--seafoam)" stroke-width=".7"/>
+      <circle cx="300" cy="300" r="120" fill="none" stroke="var(--seafoam)" stroke-width=".5"/>
+      <circle cx="300" cy="300" r="50" fill="none" stroke="var(--seafoam)" stroke-width=".4"/>
+      <line x1="300" y1="300" x2="300" y2="20" stroke="rgba(125,211,199,.8)" stroke-width="1" style="transform-origin:300px 300px;animation:radarSweep 6s linear infinite"/>
+      <line x1="20" y1="300" x2="580" y2="300" stroke="rgba(125,211,199,.15)" stroke-width=".5"/>
+      <line x1="300" y1="20" x2="300" y2="580" stroke="rgba(125,211,199,.15)" stroke-width=".5"/>
+    </svg>
+  </div>
+
+  <!-- Main lock panel -->
+  <div id="lock-panel" class="glass" style="position:relative;z-index:10;padding:0;max-width:500px;width:92%;animation:fadeInUp .9s ease;overflow:hidden">
+    <!-- Top classification bar -->
+    <div style="background:linear-gradient(90deg,rgba(220,38,38,.18),rgba(220,38,38,.08));border-bottom:1px solid rgba(220,38,38,.25);padding:8px 24px;display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:8px;font-weight:700;letter-spacing:3px;color:rgba(239,68,68,.8);text-transform:uppercase">TOP SECRET / CLASSIFIED</span>
+      <span style="font-size:8px;letter-spacing:2px;color:rgba(239,68,68,.5);font-weight:700">CLASS: ALPHA-7</span>
+    </div>
+
+    <div style="padding:36px 44px 40px">
+      <!-- Trident + title -->
+      <div style="display:flex;flex-direction:column;align-items:center;margin-bottom:28px">
+        <svg width="48" height="64" viewBox="0 0 48 64" fill="none" style="color:var(--seafoam);animation:tridentPulse 3s ease-in-out infinite;margin-bottom:12px">
+          <rect x="21" y="30" width="6" height="34" rx="3" fill="currentColor"/>
+          <rect x="17" y="28" width="14" height="4" rx="2" fill="currentColor"/>
+          <path d="M24 4 L24 30" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+          <path d="M24 4 C21 4 18 7 18 11 C18 16 21 17 24 17 C27 17 30 16 30 11 C30 7 27 4 24 4 Z" fill="currentColor"/>
+          <path d="M8 14 L8 28 Q8 34 16 34 L21 34" stroke="currentColor" stroke-width="3" stroke-linecap="round" fill="none"/>
+          <path d="M8 14 C5 14 2 17 2 21 C2 26 5 27 8 27 C11 27 14 26 14 21 C14 17 11 14 8 14 Z" fill="currentColor"/>
+          <path d="M40 14 L40 28 Q40 34 32 34 L27 34" stroke="currentColor" stroke-width="3" stroke-linecap="round" fill="none"/>
+          <path d="M40 14 C37 14 34 17 34 21 C34 26 37 27 40 27 C43 27 46 26 46 21 C46 17 43 14 40 14 Z" fill="currentColor"/>
+        </svg>
+        <div style="font-size:8px;letter-spacing:5px;color:var(--muted);font-weight:700;text-transform:uppercase;margin-bottom:5px">WAVARA DEFENSE NETWORK</div>
+        <div style="font-size:20px;font-weight:900;letter-spacing:3px;text-transform:uppercase;background:linear-gradient(135deg,var(--seafoam),#c8f0ee,var(--seafoam2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:4px">WAVEGUARD</div>
+        <div style="font-size:9px;letter-spacing:4px;color:var(--muted2);text-transform:uppercase;margin-bottom:2px">Hybrid Tsunami Early Warning System</div>
+        <div style="font-size:8px;letter-spacing:3px;color:rgba(239,68,68,.6);text-transform:uppercase;margin-top:4px;font-weight:700">Authorized Personnel Only</div>
+      </div>
+
+      <!-- Status indicators -->
+      <div style="display:flex;justify-content:center;gap:12px;margin-bottom:24px">
+        <div style="display:flex;align-items:center;gap:5px"><div style="width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green)"></div><span style="font-size:8px;color:var(--muted);letter-spacing:1px;text-transform:uppercase">Systems Online</span></div>
+        <div style="display:flex;align-items:center;gap:5px"><div style="width:6px;height:6px;border-radius:50%;background:var(--amber);box-shadow:0 0 6px var(--amber)"></div><span style="font-size:8px;color:var(--muted);letter-spacing:1px;text-transform:uppercase">Awaiting Auth</span></div>
+        <div style="display:flex;align-items:center;gap:5px"><div style="width:6px;height:6px;border-radius:50%;background:var(--blue);box-shadow:0 0 6px var(--blue)"></div><span style="font-size:8px;color:var(--muted);letter-spacing:1px;text-transform:uppercase">Sensors Active</span></div>
+      </div>
+
+      <!-- Input -->
+      <div style="margin-bottom:8px">
+        <label style="display:block;font-size:8px;letter-spacing:2.5px;color:var(--muted2);text-transform:uppercase;margin-bottom:7px">Security Access Code</label>
+        <input type="password" id="lock-input" placeholder="● ● ● ● ● ●" autocomplete="off" style="text-align:center;font-size:18px;letter-spacing:8px;text-transform:uppercase;background:rgba(4,12,20,.9);border-color:var(--border2)" onkeydown="if(event.key==='Enter')checkLock()"/>
+      </div>
+      <div id="lock-error" style="min-height:20px;margin-bottom:10px;text-align:center;font-size:10px;color:var(--red2);letter-spacing:1px;text-transform:uppercase;opacity:0;transition:opacity .2s"></div>
+      <button onclick="checkLock()" style="width:100%;padding:14px;background:linear-gradient(135deg,rgba(49,92,103,.4),rgba(59,130,246,.18));border:1px solid var(--seafoam2);color:var(--seafoam);border-radius:8px;font-size:12px;font-weight:700;letter-spacing:3px;text-transform:uppercase;cursor:pointer;transition:all .3s" onmouseover="this.style.background='linear-gradient(135deg,rgba(91,192,190,.32),rgba(59,130,246,.28))'" onmouseout="this.style.background='linear-gradient(135deg,rgba(49,92,103,.4),rgba(59,130,246,.18))'">
+        Authenticate Access
+      </button>
+
+      <div style="margin-top:18px;text-align:center;font-size:9px;color:var(--border2);letter-spacing:1.5px">
+        WAVARA-DEFENSE-NET &middot; SYS v2.4.1 &middot; ENC-AES256
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- LOADING SCREEN                                                  -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div id="loading-screen">
+  <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(36,52,71,.15) 1px,transparent 1px),linear-gradient(90deg,rgba(36,52,71,.15) 1px,transparent 1px);background-size:40px 40px;opacity:.6"></div>
+  <div id="load-scanline" style="position:absolute;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(125,211,199,.35),transparent);pointer-events:none;animation:scanline 3s linear infinite"></div>
+  <div style="position:relative;z-index:10;text-align:center;max-width:380px;padding:0 20px">
+    <svg width="90" height="90" viewBox="0 0 90 90" style="margin-bottom:20px">
+      <circle cx="45" cy="45" r="42" fill="none" stroke="rgba(125,211,199,.12)" stroke-width="1"/>
+      <circle cx="45" cy="45" r="28" fill="none" stroke="rgba(125,211,199,.18)" stroke-width="1"/>
+      <circle cx="45" cy="45" r="14" fill="none" stroke="rgba(125,211,199,.25)" stroke-width="1"/>
+      <circle cx="45" cy="45" r="4" fill="var(--seafoam)"/>
+      <line x1="45" y1="45" x2="45" y2="5" stroke="rgba(125,211,199,.6)" stroke-width="1.5" style="transform-origin:45px 45px;animation:radarSweep 2.5s linear infinite"/>
+      <circle cx="45" cy="45" r="0" fill="none" stroke="var(--seafoam2)" stroke-width="2" style="animation:pulseRing 2s ease-out infinite"/>
+      <circle cx="45" cy="45" r="0" fill="none" stroke="var(--seafoam2)" stroke-width="1.5" style="animation:pulseRing 2s ease-out infinite;animation-delay:.65s"/>
+    </svg>
+    <div style="font-size:24px;font-weight:900;letter-spacing:5px;color:var(--seafoam);text-transform:uppercase;margin-bottom:4px">WAVEGUARD</div>
+    <div style="font-size:8px;letter-spacing:4px;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Wavara Defense Network</div>
+    <div style="font-size:8px;letter-spacing:2px;color:var(--muted2);text-transform:uppercase;margin-bottom:28px">Hybrid Tsunami Early Warning System</div>
+    <div class="prog-bar" style="margin-bottom:12px"><div id="load-bar" class="prog-fill" style="width:0;background:linear-gradient(90deg,var(--accent),var(--seafoam))"></div></div>
+    <div id="load-phase" class="mono" style="color:var(--seafoam);font-size:10px;letter-spacing:2px;text-transform:uppercase">Initialising system...</div>
+    <div id="load-pct" class="mono" style="color:var(--muted);font-size:10px;margin-top:5px">0%</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- OMK SECOND LOCK                                                 -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div id="omk-lock-screen" style="display:none">
+  <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 40%,#1a0505 0%,#040810 80%);z-index:0"></div>
+  <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(220,38,38,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(220,38,38,.06) 1px,transparent 1px);background-size:50px 50px;z-index:1"></div>
+  <div class="glass" id="omk-lock-panel" style="position:relative;z-index:10;max-width:440px;width:92%;overflow:hidden;animation:fadeInUp .6s ease;border-color:rgba(220,38,38,.3)">
+    <div style="background:linear-gradient(90deg,rgba(220,38,38,.22),rgba(220,38,38,.06));border-bottom:1px solid rgba(220,38,38,.3);padding:8px 24px;display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:8px;font-weight:700;letter-spacing:3px;color:rgba(239,68,68,.9);text-transform:uppercase">⚠ RESTRICTED ACCESS</span>
+      <span style="font-size:8px;letter-spacing:2px;color:rgba(239,68,68,.5);font-weight:700">LEVEL 5 CLEARANCE</span>
+    </div>
+    <div style="padding:36px 40px 36px">
+      <div style="text-align:center;margin-bottom:24px">
+        <div style="font-size:32px;margin-bottom:10px">🔐</div>
+        <div style="font-size:8px;letter-spacing:4px;color:rgba(239,68,68,.6);font-weight:700;text-transform:uppercase;margin-bottom:6px">OMK Intelligence System</div>
+        <div style="font-size:18px;font-weight:800;letter-spacing:2px;color:var(--red2);text-transform:uppercase;margin-bottom:4px">Classified Access</div>
+        <div style="font-size:9px;color:rgba(239,68,68,.45);letter-spacing:2px;text-transform:uppercase">Unauthorized access prosecuted</div>
+      </div>
+      <label style="display:block;font-size:8px;letter-spacing:2.5px;color:rgba(239,68,68,.55);text-transform:uppercase;margin-bottom:7px">Classified Authorization Code</label>
+      <input type="password" id="omk-input" placeholder="● ● ● ● ● ●" autocomplete="off" style="text-align:center;font-size:18px;letter-spacing:8px;border-color:rgba(220,38,38,.4)" onkeydown="if(event.key==='Enter')checkOmk()"/>
+      <div id="omk-error" style="min-height:18px;margin:8px 0;text-align:center;font-size:10px;color:var(--red2);letter-spacing:1px;opacity:0;transition:opacity .2s"></div>
+      <button onclick="checkOmk()" style="width:100%;padding:13px;background:linear-gradient(135deg,rgba(220,38,38,.2),rgba(220,38,38,.08));border:1px solid rgba(239,68,68,.45);color:var(--red2);border-radius:8px;font-size:11px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;cursor:pointer;transition:all .3s;margin-bottom:10px">Access Classified System</button>
+      <button onclick="closeOmkLock()" style="width:100%;padding:9px;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:6px;font-size:10px;cursor:pointer">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- OMK CLASSIFIED OVERLAY                                         -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div id="omk-overlay">
+  <div style="max-width:1200px;margin:0 auto;padding:36px 20px">
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;padding:16px 20px;background:rgba(220,38,38,.06);border:1px solid rgba(220,38,38,.2);border-radius:10px">
+      <div>
+        <div style="font-size:8px;letter-spacing:4px;color:rgba(239,68,68,.65);font-weight:700;text-transform:uppercase;margin-bottom:4px">🔐 CLASSIFIED INTELLIGENCE BRIEFING — OMK SYSTEM</div>
+        <div style="font-size:20px;font-weight:800;letter-spacing:2px;color:var(--red2);text-transform:uppercase">OMK Command Dashboard — Operation WaveGuard</div>
+      </div>
+      <button onclick="closeOmk()" class="tab-btn" style="border-color:rgba(239,68,68,.4);color:var(--red2);flex-shrink:0">✕ Secure Close</button>
+    </div>
+    <!-- OMK Nav tabs -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px">
+      <button class="tab-btn active" id="omk-tab-0" onclick="selectOmkTab(0)" style="border-color:rgba(239,68,68,.4);color:var(--red2)">Complete Guide</button>
+      <button class="tab-btn" id="omk-tab-1" onclick="selectOmkTab(1)">Science Notes</button>
+      <button class="tab-btn" id="omk-tab-2" onclick="selectOmkTab(2)">Presentation Script</button>
+      <button class="tab-btn" id="omk-tab-3" onclick="selectOmkTab(3)">Teacher Q&amp;A</button>
+      <button class="tab-btn" id="omk-tab-4" onclick="selectOmkTab(4)">Quick Summary</button>
+    </div>
+
+    <!-- TAB 0: Complete Guide -->
+    <div class="omk-content active" id="omk-c-0">
+      <div class="g2" style="gap:16px">
+        <div class="panel">
+          <div class="sec-title sec-title-red">Section-by-Section Explanation</div>
+          <div style="display:flex;flex-direction:column;gap:11px;font-size:12px;color:var(--text);line-height:1.75">
+            <div style="padding:10px;background:rgba(125,211,199,.05);border-radius:6px;border-left:2px solid var(--seafoam2)"><strong style="color:var(--seafoam)">Lock Screen:</strong> Simulates a secure government access system. In real NOAA/DART systems, monitoring stations are access-controlled to prevent unauthorised interference with tsunami warnings.</div>
+            <div style="padding:10px;background:rgba(125,211,199,.05);border-radius:6px;border-left:2px solid var(--seafoam2)"><strong style="color:var(--seafoam)">Hero Statistics (7000km / 14000 km/h / 1000 km/h / 6.5h):</strong> These are realistic values. The 2011 Japan earthquake sent seismic waves around Earth. The 7000 km distance represents Pacific Ocean scale. Seismic P-waves travel at ~14,000 km/h through the crust. Tsunamis travel at ~800–1000 km/h in deep ocean. This gives a ~6–7 hour warning advantage.</div>
+            <div style="padding:10px;background:rgba(125,211,199,.05);border-radius:6px;border-left:2px solid var(--seafoam2)"><strong style="color:var(--seafoam)">Simulation:</strong> The five views show the same event from different perspectives. Surface view shows what ships/satellites observe. Underground shows seismic wave propagation. Satellite gives command overview. Cross-section shows both layers simultaneously.</div>
+            <div style="padding:10px;background:rgba(125,211,199,.05);border-radius:6px;border-left:2px solid var(--seafoam2)"><strong style="color:var(--seafoam)">Detection Timeline:</strong> The timeline bar is the most important visual in the project. It shows seismic detection at ~30 min (0.5 hr) vs buoy confirmation at ~7 hours. The gap IS the hybrid advantage.</div>
+            <div style="padding:10px;background:rgba(125,211,199,.05);border-radius:6px;border-left:2px solid var(--seafoam2)"><strong style="color:var(--seafoam)">Wave Science Cards:</strong> Each card covers a GCSE Physics topic. Amplitude, wavelength, frequency, period, transverse/longitudinal — all required for exams. The interactive wave lets you visualise the v = fλ relationship.</div>
+            <div style="padding:10px;background:rgba(125,211,199,.05);border-radius:6px;border-left:2px solid var(--seafoam2)"><strong style="color:var(--seafoam)">Radar Comparison Chart:</strong> The pentagon chart has 5 axes. The hybrid WaveGuard polygon covers more area than either individual system — this is the visual proof of superiority. Point to it explicitly when presenting.</div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="sec-title sec-title-red">Key Numbers to Know</div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="padding:12px;background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.2);border-radius:8px">
+              <div style="font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px">Distance — Epicentre to Wavara</div>
+              <div class="mono" style="color:var(--blue);font-size:22px;font-weight:700">7,000 km</div>
+              <div style="font-size:10px;color:var(--muted2);margin-top:3px">Realistic Pacific Ocean scale. Japan to California = ~8,900 km.</div>
+            </div>
+            <div style="padding:12px;background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.2);border-radius:8px">
+              <div style="font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px">Seismic P-Wave Speed</div>
+              <div class="mono" style="color:var(--amber);font-size:22px;font-weight:700">14,000 km/h</div>
+              <div style="font-size:10px;color:var(--muted2);margin-top:3px">~3.9 km/s through ocean crust. Arrives at WaveGuard sensors in 30 minutes.</div>
+            </div>
+            <div style="padding:12px;background:rgba(125,211,199,.07);border:1px solid rgba(125,211,199,.2);border-radius:8px">
+              <div style="font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px">Tsunami Wave Speed (Deep Ocean)</div>
+              <div class="mono" style="color:var(--seafoam);font-size:22px;font-weight:700">1,000 km/h</div>
+              <div style="font-size:10px;color:var(--muted2);margin-top:3px">v = √(9.81 × 10,200m) ≈ 300 m/s ≈ 1,080 km/h. Takes ~7 hours to reach Wavara.</div>
+            </div>
+            <div style="padding:12px;background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.2);border-radius:8px">
+              <div style="font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px">Hybrid Warning Advantage</div>
+              <div class="mono" style="color:var(--green);font-size:22px;font-weight:700">6.5 hours earlier</div>
+              <div style="font-size:10px;color:var(--muted2);margin-top:3px">7.0h (buoy-only) − 0.5h (seismic detection) = 6.5 hour evacuation advantage.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 1: Science Notes -->
+    <div class="omk-content" id="omk-c-1">
+      <div class="g2" style="gap:16px">
+        <div class="panel">
+          <div class="sec-title sec-title-red">Wave Physics — What to Say</div>
+          <div style="display:flex;flex-direction:column;gap:12px;font-size:12px;line-height:1.75">
+            <div style="padding:11px;background:rgba(125,211,199,.05);border-radius:6px;border-left:2px solid var(--seafoam)">
+              <div style="color:var(--seafoam);font-weight:700;margin-bottom:4px;font-size:11px">Amplitude</div>
+              "Amplitude is the maximum displacement of a wave from equilibrium. In deep ocean, tsunamis have amplitudes of just 0.3–1m — completely undetectable by ships. Near shore, energy conservation causes amplitude to grow to 10–40m."
+            </div>
+            <div style="padding:11px;background:rgba(125,211,199,.05);border-radius:6px;border-left:2px solid var(--seafoam)">
+              <div style="color:var(--seafoam);font-weight:700;margin-bottom:4px;font-size:11px">Wavelength (λ)</div>
+              "Tsunami wavelengths can reach 200–500 km. This is why they are so destructive — the entire wave column moves when the seafloor rises. Wind waves have wavelengths of just 100m."
+            </div>
+            <div style="padding:11px;background:rgba(125,211,199,.05);border-radius:6px;border-left:2px solid var(--seafoam)">
+              <div style="color:var(--amber);font-weight:700;margin-bottom:4px;font-size:11px">Wave Equation: v = fλ</div>
+              "The wave equation connects speed, frequency, and wavelength. For tsunamis: speed also equals √(g×d). At depth 4000m, v = √(9.81×4000) = 198 m/s = 713 km/h. At depth 10,000m, v = √(9.81×10000) = 313 m/s = 1,128 km/h."
+            </div>
+            <div style="padding:11px;background:rgba(125,211,199,.05);border-radius:6px;border-left:2px solid var(--blue)">
+              <div style="color:var(--blue);font-weight:700;margin-bottom:4px;font-size:11px">Transverse vs Longitudinal</div>
+              "Seismic P-waves are longitudinal — particles compress and expand parallel to the wave's direction of travel. That's why they travel fastest through solid rock. Seismic S-waves and tsunami surface waves are transverse. P-waves always arrive first at a seismograph."
+            </div>
+            <div style="padding:11px;background:rgba(125,211,199,.05);border-radius:6px;border-left:2px solid var(--green)">
+              <div style="color:var(--green);font-weight:700;margin-bottom:4px;font-size:11px">Energy Transfer</div>
+              "Waves transfer energy without permanently moving matter. Ocean buoys prove this — they bob up and down as a tsunami passes without being carried away. The ENERGY travels at 1000 km/h; the water particles barely move horizontally."
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="sec-title sec-title-red">Why the Hybrid System Works</div>
+          <div style="display:flex;flex-direction:column;gap:12px;font-size:12px;line-height:1.75">
+            <div style="padding:11px;background:rgba(49,92,103,.1);border-radius:6px">
+              <div style="color:var(--amber);font-weight:700;margin-bottom:4px;font-size:11px">⚡ Problem with Seismic Only</div>
+              Not every underwater earthquake generates a tsunami. Seismographs would trigger false alarms every time there is a magnitude 6+ earthquake — and coastal populations would stop trusting warnings (cry-wolf effect). The 1946 Hilo false alarm devastated public trust.
+            </div>
+            <div style="padding:11px;background:rgba(49,92,103,.1);border-radius:6px">
+              <div style="color:var(--blue);font-weight:700;margin-bottom:4px;font-size:11px">🌊 Problem with Buoys Only</div>
+              Ocean buoy (DART) confirmation is highly accurate — it directly measures pressure change from a passing tsunami. However, the wave must physically travel from the epicentre to the buoy before detection. This destroys the warning advantage. The 2011 Japan warning was too slow because buoy data took too long.
+            </div>
+            <div style="padding:11px;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.15);border-radius:6px">
+              <div style="color:var(--green);font-weight:700;margin-bottom:4px;font-size:11px">✓ Hybrid Solution</div>
+              Seismic sensors detect the earthquake IMMEDIATELY. This gives a preliminary alert while the buoy data is awaited. When the buoy CONFIRMS a tsunami wave exists, a full evacuation order is issued. Speed of seismic detection + accuracy of buoy confirmation = maximum warning time with minimum false alarms.
+            </div>
+            <div style="padding:11px;background:rgba(59,130,246,.06);border-radius:6px">
+              <div style="color:var(--blue);font-weight:700;margin-bottom:4px;font-size:11px">📊 The Numbers Prove It</div>
+              <span class="mono" style="font-size:11px">
+                Distance: 7,000 km<br/>
+                Seismic speed: 14,000 km/h → detects in 30 min<br/>
+                Tsunami speed: 1,000 km/h → arrives in 7 hours<br/>
+                Hybrid advantage: 6.5 hours of evacuation time
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: Presentation Script -->
+    <div class="omk-content" id="omk-c-2">
+      <div class="g2" style="gap:16px">
+        <div class="panel">
+          <div class="sec-title sec-title-red">How to Present Each Section</div>
+          <div style="display:flex;flex-direction:column;gap:11px;font-size:12px;line-height:1.75">
+            <div style="padding:10px;background:rgba(59,130,246,.07);border-left:3px solid var(--blue);border-radius:0 6px 6px 0">
+              <strong style="color:var(--blue)">Opening (Lock Screen):</strong><br/>
+              "Before anyone can access our tsunami monitoring network, they need security clearance. This simulates real government emergency systems where access to critical infrastructure is restricted. Enter WAVARA to begin."
+            </div>
+            <div style="padding:10px;background:rgba(125,211,199,.07);border-left:3px solid var(--seafoam);border-radius:0 6px 6px 0">
+              <strong style="color:var(--seafoam)">Home / Hero (Key Stats):</strong><br/>
+              "The four statistics at the top of our dashboard are the most important numbers in this project. 7,000 km is the distance from a realistic ocean earthquake to Wavara. 14,000 km/h is how fast seismic waves travel. 1,000 km/h is how fast the tsunami travels. This means we get 6.5 hours of extra warning."
+            </div>
+            <div style="padding:10px;background:rgba(245,158,11,.07);border-left:3px solid var(--amber);border-radius:0 6px 6px 0">
+              <strong style="color:var(--amber)">Simulation:</strong><br/>
+              "Watch the simulation carefully. The orange pulse is a seismic wave — it travels underground at 14,000 km/h. The blue wave is the tsunami on the surface — much slower at 1,000 km/h. The timeline bar at the bottom shows why this matters: seismic detection happens at 30 minutes, but the tsunami won't arrive for 7 hours."
+            </div>
+            <div style="padding:10px;background:rgba(16,185,129,.07);border-left:3px solid var(--green);border-radius:0 6px 6px 0">
+              <strong style="color:var(--green)">Comparison Radar Chart:</strong><br/>
+              "Look at this pentagon chart. The green hybrid polygon covers the most area across all five axes. This is the scientific proof that combining both systems wins on every metric simultaneously. Neither individual system can do this."
+            </div>
+            <div style="padding:10px;background:rgba(49,92,103,.1);border-left:3px solid var(--accent);border-radius:0 6px 6px 0">
+              <strong style="color:var(--seafoam2)">Closing (Public Safety):</strong><br/>
+              "The science only matters if it saves lives. Our public safety section translates WaveGuard's 6.5-hour advantage into concrete evacuation steps. At 1000 km/h, a tsunami 7000 km away gives you 7 hours — but without a hybrid warning system, you might only get 30 minutes. That's the difference between life and death for coastal communities."
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="sec-title sec-title-red">Pointing Out Interactive Features</div>
+          <div style="display:flex;flex-direction:column;gap:11px;font-size:12px;line-height:1.75">
+            <div style="padding:10px;background:rgba(125,211,199,.05);border-radius:6px">
+              <strong style="color:var(--seafoam)">Sliders:</strong> "I can change the ocean depth slider here — watch the tsunami speed graph update in real time. This uses the actual formula v = √(g×d). Deeper ocean = faster tsunami."
+            </div>
+            <div style="padding:10px;background:rgba(125,211,199,.05);border-radius:6px">
+              <strong style="color:var(--seafoam)">Wave Equation page:</strong> "Move the frequency slider up. Notice the waves get closer together — shorter wavelength. Move the wavelength slider and the calculated speed changes. This is v = fλ in action."
+            </div>
+            <div style="padding:10px;background:rgba(125,211,199,.05);border-radius:6px">
+              <strong style="color:var(--seafoam)">Wave Science cards:</strong> "Hover over any of these cards to see a full scientific explanation. Each one covers a topic from the GCSE Physics waves unit."
+            </div>
+            <div style="padding:10px;background:rgba(125,211,199,.05);border-radius:6px">
+              <strong style="color:var(--seafoam)">Detection Log:</strong> "When you press Start Earthquake, the detection log on the right fills up in real time — just like a real mission control room during an event."
+            </div>
+            <div style="padding:10px;background:rgba(125,211,199,.05);border-radius:6px">
+              <strong style="color:var(--seafoam)">View modes:</strong> "I can switch between 5 different camera angles of the same simulation — surface view, underground seismic view, satellite top-down, cross-section, and the system dashboard."
+            </div>
+            <div style="padding:10px;background:rgba(125,211,199,.05);border-radius:6px">
+              <strong style="color:var(--amber)">Scientists section:</strong> "The scientists who built this system are listed here with their roles and clearance levels — adding a realistic human element to a real emergency response infrastructure."
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: Teacher Q&A -->
+    <div class="omk-content" id="omk-c-3">
+      <div class="g2" style="gap:16px">
+        <div class="panel">
+          <div class="sec-title sec-title-red">Expected Teacher Questions</div>
+          <div style="display:flex;flex-direction:column;gap:10px;font-size:12px;line-height:1.7">
+            <div style="padding:11px;background:rgba(59,130,246,.06);border-radius:6px">
+              <div style="color:var(--blue);font-weight:700;margin-bottom:3px">Q: What formula calculates tsunami speed?</div>
+              <div style="color:var(--text)">A: "v = √(g × d), where g = 9.81 m/s² and d = ocean depth in metres. At 4000m depth, that gives 198 m/s or about 713 km/h. The formula comes from shallow-water wave theory."</div>
+            </div>
+            <div style="padding:11px;background:rgba(59,130,246,.06);border-radius:6px">
+              <div style="color:var(--blue);font-weight:700;margin-bottom:3px">Q: Why do seismic waves travel so much faster?</div>
+              <div style="color:var(--text)">A: "Rock is far more rigid and elastic than water. Seismic P-waves are longitudinal compression waves — the Earth's crust transmits them at 5–14 km/s depending on rock density. Water simply can't support these waves the same way."</div>
+            </div>
+            <div style="padding:11px;background:rgba(59,130,246,.06);border-radius:6px">
+              <div style="color:var(--blue);font-weight:700;margin-bottom:3px">Q: What is the difference between P and S waves?</div>
+              <div style="color:var(--text)">A: "P-waves are Primary/compressional longitudinal waves — particles vibrate parallel to travel direction. They travel fastest, ~14,000 km/h. S-waves are Secondary/shear transverse waves — particles vibrate perpendicular. They travel ~8,000 km/h and can't travel through liquids."</div>
+            </div>
+            <div style="padding:11px;background:rgba(59,130,246,.06);border-radius:6px">
+              <div style="color:var(--blue);font-weight:700;margin-bottom:3px">Q: How does a DART buoy work?</div>
+              <div style="color:var(--text)">A: "A DART buoy has a Bottom Pressure Recorder on the seafloor that measures changes in water pressure. A passing tsunami increases pressure by just 1–2 Pa per metre of wave height. The BPR transmits data acoustically to a surface buoy, which sends it via satellite to monitoring centres."</div>
+            </div>
+            <div style="padding:11px;background:rgba(59,130,246,.06);border-radius:6px">
+              <div style="color:var(--blue);font-weight:700;margin-bottom:3px">Q: Can you explain v = fλ?</div>
+              <div style="color:var(--text)">A: "Wave speed equals frequency times wavelength. If a tsunami has a frequency of 0.0005 Hz — one wave every 33 minutes — and a wavelength of 200,000 m, then v = 0.0005 × 200,000 = 100 m/s. The interactive slider on our Wave Equation page shows this relationship visually."</div>
+            </div>
+            <div style="padding:11px;background:rgba(59,130,246,.06);border-radius:6px">
+              <div style="color:var(--blue);font-weight:700;margin-bottom:3px">Q: Is Wavara a real place?</div>
+              <div style="color:var(--text)">A: "Wavara is a fictional island nation designed to represent Pacific coastal communities. However, all physics, formulas, speeds, and detection methods are based on real systems — specifically NOAA's DART II network and the Pacific Tsunami Warning Centre."</div>
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="sec-title sec-title-red">Advanced Questions</div>
+          <div style="display:flex;flex-direction:column;gap:10px;font-size:12px;line-height:1.7">
+            <div style="padding:11px;background:rgba(245,158,11,.06);border-radius:6px">
+              <div style="color:var(--amber);font-weight:700;margin-bottom:3px">Q: Why doesn't tsunami speed equal seismic speed?</div>
+              <div>A: "Seismic waves travel through the solid elastic earth. Tsunamis travel through ocean water. The medium determines wave speed. Water is fluid — it can't support the same elastic stress as rock. The tsunami wave is also gravitational — it's driven by gravity restoring equilibrium after the seabed displacement."</div>
+            </div>
+            <div style="padding:11px;background:rgba(245,158,11,.06);border-radius:6px">
+              <div style="color:var(--amber);font-weight:700;margin-bottom:3px">Q: What happens to wave speed near the coast?</div>
+              <div>A: "As the tsunami enters shallow water, v = √(g×d) means speed decreases dramatically. But energy is conserved — since E ∝ A²v, as v drops, amplitude A must increase. This is shoaling. A 0.5m deep-ocean wave becomes a 15m coastal wave. It's also why the wavelength compresses and waves stack up."</div>
+            </div>
+            <div style="padding:11px;background:rgba(245,158,11,.06);border-radius:6px">
+              <div style="color:var(--amber);font-weight:700;margin-bottom:3px">Q: How does the hybrid system reduce false alarms?</div>
+              <div>A: "Seismic sensors alone would alert for every M6+ earthquake — but only ~1 in 10 large earthquakes generates a destructive tsunami. Requiring buoy confirmation creates a two-factor authentication system. Both must agree. This reduces false alarms by ~85% while preserving the speed advantage of seismic detection."</div>
+            </div>
+            <div style="padding:11px;background:rgba(245,158,11,.06);border-radius:6px">
+              <div style="color:var(--amber);font-weight:700;margin-bottom:3px">Q: What improvements could be made?</div>
+              <div>A: "AI pattern recognition to predict tsunami generation probability from seismic data alone. Seafloor GPS sensors to directly measure seabed uplift (coseismic deformation). Dense buoy networks to triangulate wave direction. Real-time ocean modelling to predict coastal run-up height and inundation zones."</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: Quick Summary -->
+    <div class="omk-content" id="omk-c-4">
+      <div class="g2" style="gap:16px">
+        <div class="panel">
+          <div class="sec-title sec-title-red">30-Second Summary (Memorise This)</div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div style="padding:16px;background:rgba(125,211,199,.08);border:1px solid rgba(125,211,199,.2);border-radius:10px;font-size:15px;color:var(--text);line-height:1.8">"Operation WaveGuard is a hybrid tsunami early-warning system that combines seismic P-wave sensors with ocean pressure buoys. Seismic waves travel at 14,000 km/h — 14× faster than tsunamis. This gives us 6.5 hours of extra evacuation time for the island of Wavara, 7,000 km from the earthquake zone."</div>
+            <div style="padding:16px;background:rgba(49,92,103,.1);border:1px solid var(--border);border-radius:10px">
+              <div style="font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px">Key Physics Equations</div>
+              <div class="mono" style="font-size:13px;color:var(--seafoam);line-height:2">
+                v = fλ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[wave equation]<br/>
+                v = √(gd) &nbsp;&nbsp;[tsunami speed]<br/>
+                f = 1/T &nbsp;&nbsp;&nbsp;&nbsp;[frequency]<br/>
+                t = d/v &nbsp;&nbsp;&nbsp;&nbsp;[detection time]
+              </div>
+            </div>
+            <div style="padding:12px;background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.2);border-radius:8px">
+              <div style="font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">Why Hybrid Wins</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:11px;color:var(--text)">
+                <div style="text-align:center;padding:8px;background:rgba(125,211,199,.06);border-radius:6px"><div style="color:var(--green);font-size:18px;font-weight:700">10/10</div><div style="color:var(--muted);font-size:9px;margin-top:2px">Reliability</div></div>
+                <div style="text-align:center;padding:8px;background:rgba(125,211,199,.06);border-radius:6px"><div style="color:var(--green);font-size:18px;font-weight:700">95%</div><div style="color:var(--muted);font-size:9px;margin-top:2px">Evacuation Rate</div></div>
+                <div style="text-align:center;padding:8px;background:rgba(125,211,199,.06);border-radius:6px"><div style="color:var(--green);font-size:18px;font-weight:700">2/10</div><div style="color:var(--muted);font-size:9px;margin-top:2px">False Alarms</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="sec-title sec-title-red">Presentation Tips</div>
+          <div style="display:flex;flex-direction:column;gap:10px;font-size:12px;line-height:1.7">
+            <div style="padding:10px;background:rgba(59,130,246,.06);border-radius:6px;border-left:2px solid var(--blue)"><strong style="color:var(--blue)">Opening impact:</strong> Start by pressing Start Earthquake without explaining. Let the simulation run silently for 10 seconds. Then say: "7,000 km. 1,000 km/h. Without WaveGuard, that wave arrives with 30 minutes warning. With WaveGuard — 7 hours."</div>
+            <div style="padding:10px;background:rgba(125,211,199,.07);border-radius:6px;border-left:2px solid var(--seafoam)"><strong style="color:var(--seafoam)">The 6.5 hour moment:</strong> Point to the timeline bar when it appears. Say: "This gap is the difference between a mass casualty event and a successful evacuation."</div>
+            <div style="padding:10px;background:rgba(245,158,11,.07);border-radius:6px;border-left:2px solid var(--amber)"><strong style="color:var(--amber)">Interactive proof:</strong> Change the ocean depth slider and say "every number updates automatically because it's all connected to real physics formulas — not just static graphs."</div>
+            <div style="padding:10px;background:rgba(16,185,129,.07);border-radius:6px;border-left:2px solid var(--green)"><strong style="color:var(--green)">The radar chart:</strong> Say: "The green shape is always bigger. On every single axis. That's not an opinion — it's the data."</div>
+            <div style="padding:10px;background:rgba(49,92,103,.1);border-radius:6px;border-left:2px solid var(--accent)"><strong style="color:var(--seafoam2)">Ending:</strong> Close on the Public Safety page. "This is what WaveGuard is actually for. Not the physics — the people."</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:24px;padding:12px 20px;background:rgba(220,38,38,.05);border:1px solid rgba(220,38,38,.15);border-radius:8px;text-align:center;font-size:9px;color:rgba(239,68,68,.5);letter-spacing:2px;text-transform:uppercase">
+      🔐 CLASSIFIED — OMK INTELLIGENCE SYSTEM — OPERATION WAVEGUARD — EDUCATIONAL USE
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- MAIN APPLICATION                                               -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div id="app" style="display:none">
+
+  <!-- NAVBAR -->
+  <nav id="navbar">
+    <div style="display:flex;align-items:center;gap:9px;margin-right:14px;flex-shrink:0">
+      <svg width="20" height="26" viewBox="0 0 48 64" fill="none" style="color:var(--seafoam)">
+        <rect x="21" y="30" width="6" height="34" rx="3" fill="currentColor"/>
+        <rect x="17" y="28" width="14" height="4" rx="2" fill="currentColor"/>
+        <path d="M24 4 L24 30" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+        <path d="M24 4 C21 4 18 7 18 11 C18 16 21 17 24 17 C27 17 30 16 30 11 C30 7 27 4 24 4 Z" fill="currentColor"/>
+        <path d="M8 14 L8 28 Q8 34 16 34 L21 34" stroke="currentColor" stroke-width="3" stroke-linecap="round" fill="none"/>
+        <path d="M8 14 C5 14 2 17 2 21 C2 26 5 27 8 27 C11 27 14 26 14 21 C14 17 11 14 8 14 Z" fill="currentColor"/>
+        <path d="M40 14 L40 28 Q40 34 32 34 L27 34" stroke="currentColor" stroke-width="3" stroke-linecap="round" fill="none"/>
+        <path d="M40 14 C37 14 34 17 34 21 C34 26 37 27 40 27 C43 27 46 26 46 21 C46 17 43 14 40 14 Z" fill="currentColor"/>
+      </svg>
+      <span style="color:var(--seafoam);font-size:10px;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;white-space:nowrap">WaveGuard</span>
+      <div class="clearance-badge lvl-sci" style="font-size:7px">MONITORING</div>
+    </div>
+    <button class="nav-link active" onclick="showPage('home')">Home</button>
+    <button class="nav-link" onclick="showPage('simulation')">Simulation</button>
+    <button class="nav-link" onclick="showPage('wave')">Wave Science</button>
+    <button class="nav-link" onclick="showPage('equation')">v = fλ</button>
+    <button class="nav-link" onclick="showPage('comparison')">Comparison</button>
+    <button class="nav-link" onclick="showPage('graphs')">Graphs</button>
+    <button class="nav-link" onclick="showPage('scientists')">Scientists</button>
+    <button class="nav-link" onclick="showPage('safety')">Safety</button>
+    <div style="flex:1"></div>
+    <!-- System status lights -->
+    <div style="display:flex;align-items:center;gap:8px;margin-right:10px;flex-shrink:0">
+      <div style="display:flex;align-items:center;gap:3px"><div style="width:5px;height:5px;border-radius:50%;background:var(--green);box-shadow:0 0 5px var(--green)"></div><span style="font-size:7px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Online</span></div>
+      <div style="display:flex;align-items:center;gap:3px"><div id="nav-sim-dot" style="width:5px;height:5px;border-radius:50%;background:var(--border2)"></div><span style="font-size:7px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Sim</span></div>
+    </div>
+    <button onclick="openOmkLock()" style="background:transparent;border:1px solid rgba(36,52,71,.6);color:rgba(158,179,200,.25);padding:4px 10px;border-radius:4px;font-size:8px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;flex-shrink:0" title="OMK">OMK</button>
+  </nav>
+
+  <!-- ─────────────────────────────────────────── PAGE: HOME ──── -->
+  <div id="page-home" class="page active">
+    <div style="min-height:calc(100vh - 44px);position:relative;overflow:hidden;background:radial-gradient(ellipse at 50% 70%,#0d2540 0%,#081018 65%)">
+      <!-- Stars -->
+      <div id="hero-stars" style="position:absolute;inset:0;pointer-events:none"></div>
+      <!-- Grid -->
+      <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(36,52,71,.14) 1px,transparent 1px),linear-gradient(90deg,rgba(36,52,71,.14) 1px,transparent 1px);background-size:55px 55px;opacity:.7"></div>
+      <!-- Waves -->
+      <svg style="position:absolute;bottom:0;left:0;width:100%" viewBox="0 0 1440 300" preserveAspectRatio="none" height="280">
+        <defs><linearGradient id="hg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0e2e4a" stop-opacity=".6"/><stop offset="100%" stop-color="#040c14" stop-opacity="1"/></linearGradient></defs>
+        <path fill="url(#hg)" d="M0,110 C360,65 720,170 1080,110 L1440,110 L1440,300 L0,300 Z" style="animation:waveDrift 7s ease-in-out infinite"/>
+        <path fill="url(#hg)" fill-opacity=".45" d="M0,140 C420,90 840,200 1260,140 L1440,150 L1440,300 L0,300 Z" style="animation:waveDrift 9s ease-in-out infinite reverse"/>
+        <path fill="rgba(125,211,199,.04)" d="M0,168 C500,120 1000,220 1440,168 L1440,300 L0,300 Z"/>
+      </svg>
+
+      <div style="position:relative;z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:calc(100vh - 44px);padding:40px 24px;text-align:center">
+        <!-- Trident + title -->
+        <div style="animation:fadeInUp .9s ease">
+          <div style="display:flex;justify-content:center;margin-bottom:16px">
+            <svg width="56" height="74" viewBox="0 0 48 64" fill="none" style="color:var(--seafoam);filter:drop-shadow(0 0 12px rgba(125,211,199,.3));animation:tridentPulse 4s ease-in-out infinite">
+              <rect x="21" y="30" width="6" height="34" rx="3" fill="currentColor"/>
+              <rect x="17" y="28" width="14" height="4" rx="2" fill="currentColor"/>
+              <path d="M24 4 L24 30" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+              <path d="M24 4 C21 4 18 7 18 11 C18 16 21 17 24 17 C27 17 30 16 30 11 C30 7 27 4 24 4 Z" fill="currentColor"/>
+              <path d="M8 14 L8 28 Q8 34 16 34 L21 34" stroke="currentColor" stroke-width="3" stroke-linecap="round" fill="none"/>
+              <path d="M8 14 C5 14 2 17 2 21 C2 26 5 27 8 27 C11 27 14 26 14 21 C14 17 11 14 8 14 Z" fill="currentColor"/>
+              <path d="M40 14 L40 28 Q40 34 32 34 L27 34" stroke="currentColor" stroke-width="3" stroke-linecap="round" fill="none"/>
+              <path d="M40 14 C37 14 34 17 34 21 C34 26 37 27 40 27 C43 27 46 26 46 21 C46 17 43 14 40 14 Z" fill="currentColor"/>
+            </svg>
+          </div>
+          <div style="font-size:9px;letter-spacing:5px;color:var(--muted2);font-weight:700;text-transform:uppercase;margin-bottom:8px">Wavara Defense Network — Pacific Command</div>
+          <h1 style="font-size:clamp(32px,7vw,76px);font-weight:900;letter-spacing:4px;text-transform:uppercase;background:linear-gradient(135deg,var(--seafoam),#d8f5f2,var(--seafoam2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1;margin-bottom:8px">Operation<br/>WaveGuard</h1>
+          <div style="font-size:12px;letter-spacing:4px;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Hybrid Tsunami Early Warning System</div>
+          <div style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-bottom:28px">
+            <span class="clearance-badge lvl-1">Level 1 Monitoring</span>
+            <span class="clearance-badge lvl-3">Level 3 Response</span>
+            <span class="clearance-badge lvl-sci">Scientific Command</span>
+          </div>
+          <p style="font-size:14px;color:var(--muted);max-width:600px;margin:0 auto 34px;line-height:1.8">A dual-sensor hybrid system combining deep-ocean <span style="color:var(--seafoam)">seismic P-wave detection</span> with <span style="color:var(--blue)">DART pressure buoy confirmation</span>, protecting coastal populations with maximum warning time and minimum false alarms.</p>
+          <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+            <button class="btn-primary" onclick="showPage('simulation')" style="font-size:12px;padding:13px 32px">▶ Launch Simulation</button>
+            <button class="tab-btn" onclick="showPage('wave')" style="padding:12px 22px;font-size:10px">〰 Wave Science</button>
+            <button class="tab-btn" onclick="showPage('scientists')" style="padding:12px 22px;font-size:10px">👤 Our Team</button>
+          </div>
+        </div>
+
+        <!-- Key Stats Cards -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:56px;max-width:900px;width:100%;animation:fadeInUp 1.1s ease">
+          <div class="glass-light" style="padding:18px 14px;text-align:center">
+            <div style="font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Epicentre → Wavara</div>
+            <div class="mono" style="color:var(--seafoam);font-size:22px;font-weight:700">7,000 km</div>
+            <div style="font-size:9px;color:var(--muted2);margin-top:4px">Pacific Ocean scale</div>
+          </div>
+          <div class="glass-light" style="padding:18px 14px;text-align:center">
+            <div style="font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Seismic Wave Speed</div>
+            <div class="mono" style="color:var(--amber);font-size:22px;font-weight:700">14,000 km/h</div>
+            <div style="font-size:9px;color:var(--muted2);margin-top:4px">P-wave through crust</div>
+          </div>
+          <div class="glass-light" style="padding:18px 14px;text-align:center">
+            <div style="font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Tsunami Wave Speed</div>
+            <div class="mono" style="color:var(--blue);font-size:22px;font-weight:700">1,000 km/h</div>
+            <div style="font-size:9px;color:var(--muted2);margin-top:4px">Deep ocean surface</div>
+          </div>
+          <div class="glass-light" style="padding:18px 14px;text-align:center">
+            <div style="font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Hybrid Advantage</div>
+            <div class="mono" style="color:var(--green);font-size:22px;font-weight:700">6.5 hrs earlier</div>
+            <div style="font-size:9px;color:var(--muted2);margin-top:4px">vs. buoy-only system</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ──────────────────────────────────────── PAGE: SIMULATION ── -->
+  <div id="page-simulation" class="page">
+    <div class="wrap">
+      <div class="section-head"><span style="font-size:22px">🌊</span><h2>Hybrid System Simulation</h2></div>
+
+      <!-- View mode buttons -->
+      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center">
+        <button class="tab-btn active" id="vbtn-surface" onclick="setView('surface')">Surface</button>
+        <button class="tab-btn" id="vbtn-underground" onclick="setView('underground')">Underground</button>
+        <button class="tab-btn" id="vbtn-satellite" onclick="setView('satellite')">Satellite</button>
+        <button class="tab-btn" id="vbtn-cross" onclick="setView('cross')">Cross-Section</button>
+        <button class="tab-btn" id="vbtn-dashboard" onclick="setView('dashboard')">Dashboard</button>
+        <div style="flex:1"></div>
+        <button class="btn-danger" id="sim-btn" onclick="startSim()">⚡ Start Earthquake</button>
+        <button class="tab-btn" onclick="resetSim()" style="padding:6px 14px">↺ Reset</button>
+      </div>
+
+      <!-- Main sim grid -->
+      <div id="sim-grid" style="display:grid;grid-template-columns:1fr 310px;gap:14px;margin-bottom:14px">
+
+        <!-- Canvas panels -->
+        <div id="sim-canvas">
+
+          <!-- SURFACE VIEW -->
+          <div id="view-surface" class="panel" style="height:400px;padding:0;overflow:hidden;position:relative">
+            <div style="position:absolute;inset:0;background:linear-gradient(180deg,#050e18 0%,#071a2e 25%,#082040 55%,#040c18 100%)"></div>
+            <div style="position:absolute;inset:0;opacity:.12" class="gg"></div>
+            <!-- Ocean surface line -->
+            <div style="position:absolute;top:125px;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(125,211,199,.25),rgba(59,130,246,.3),rgba(125,211,199,.25),transparent)"></div>
+            <div style="position:absolute;top:126px;left:0;right:0;height:20px;opacity:.35;background:linear-gradient(90deg,transparent,rgba(49,92,103,.3) 25%,rgba(125,211,199,.28) 50%,rgba(49,92,103,.3) 75%,transparent);background-size:300px 100%;animation:waveScroll 3s linear infinite"></div>
+            <!-- Depth label -->
+            <div style="position:absolute;top:145px;left:14px;font-size:8px;color:rgba(125,211,199,.3);letter-spacing:2px;text-transform:uppercase">Ocean Surface</div>
+            <div style="position:absolute;bottom:65px;left:14px;font-size:8px;color:rgba(36,52,71,.8);letter-spacing:2px;text-transform:uppercase">Seafloor / Crust</div>
+            <!-- Epicentre -->
+            <div style="position:absolute;left:16%;bottom:68px;transform:translateX(-50%)">
+              <svg width="38" height="40" viewBox="0 0 38 40"><polygon points="19,3 36,37 2,37" fill="none" stroke="var(--red2)" stroke-width="1.5"/><text x="19" y="28" text-anchor="middle" fill="var(--red2)" font-size="14" font-family="monospace">!</text></svg>
+              <div id="surf-eq-pulses"></div>
+              <div style="font-size:7px;color:var(--red2);text-align:center;letter-spacing:1px;margin-top:-2px;font-weight:700">M8.2 EQ</div>
+            </div>
+            <!-- Seismic wave underground dot -->
+            <div id="sv-swave" style="position:absolute;bottom:62px;left:16%;display:none;transform:translateX(-50%)">
+              <div style="width:22px;height:22px;border-radius:50%;background:radial-gradient(circle,rgba(245,158,11,.7),transparent);border:2px solid var(--amber);box-shadow:0 0 14px var(--amber)"></div>
+              <div style="font-size:7px;color:var(--amber);text-align:center;margin-top:3px;font-weight:700;letter-spacing:1px">P-WAVE</div>
+            </div>
+            <!-- Tsunami wave surface -->
+            <div id="sv-tsunami" style="position:absolute;top:98px;left:16%;display:none;transform:translateX(-50%)">
+              <svg width="52" height="56" viewBox="0 0 52 56"><path d="M0,46 Q13,8 26,24 Q39,40 52,14 L52,56 L0,56 Z" fill="rgba(59,130,246,.3)" stroke="var(--blue)" stroke-width="1.5"/><path d="M0,42 Q13,10 26,22 Q39,34 52,10" fill="none" stroke="rgba(125,211,199,.5)" stroke-width="1"/></svg>
+              <div style="font-size:7px;color:var(--blue);text-align:center;font-weight:700;letter-spacing:1px">TSUNAMI</div>
+            </div>
+            <!-- Sensors -->
+            <div id="sv-s1" style="position:absolute;left:34%;bottom:68px;transform:translateX(-50%)">
+              <div class="sv-sensor" style="width:16px;height:16px;border-radius:2px;background:var(--panel2);border:1.5px solid var(--muted2);display:flex;align-items:center;justify-content:center;font-size:8px;color:var(--muted2);transition:all .4s">▲</div>
+              <div style="font-size:7px;text-align:center;color:var(--muted2);margin-top:2px">SEIS-1</div>
+            </div>
+            <div id="sv-s2" style="position:absolute;left:48%;bottom:68px;transform:translateX(-50%)">
+              <div class="sv-sensor" style="width:16px;height:16px;border-radius:2px;background:var(--panel2);border:1.5px solid var(--muted2);display:flex;align-items:center;justify-content:center;font-size:8px;color:var(--muted2);transition:all .4s">▲</div>
+              <div style="font-size:7px;text-align:center;color:var(--muted2);margin-top:2px">SEIS-2</div>
+            </div>
+            <!-- Buoys -->
+            <div id="sv-b1" style="position:absolute;left:44%;top:110px;transform:translateX(-50%);animation:buoyBob 3s ease-in-out infinite">
+              <svg width="22" height="30" viewBox="0 0 22 30"><ellipse cx="11" cy="9" rx="7" ry="4.5" fill="rgba(27,42,58,.8)" stroke="var(--muted2)" stroke-width="1.5" class="buoy-top"/><line x1="11" y1="13" x2="11" y2="26" stroke="var(--muted2)" stroke-width="1"/><circle cx="11" cy="26" r="2.5" fill="var(--border2)" class="buoy-base"/></svg>
+              <div style="font-size:7px;text-align:center;color:var(--muted2)" class="buoy-lbl">B-1</div>
+            </div>
+            <div id="sv-b2" style="position:absolute;left:60%;top:110px;transform:translateX(-50%);animation:buoyBob 3s ease-in-out infinite;animation-delay:.6s">
+              <svg width="22" height="30" viewBox="0 0 22 30"><ellipse cx="11" cy="9" rx="7" ry="4.5" fill="rgba(27,42,58,.8)" stroke="var(--muted2)" stroke-width="1.5" class="buoy-top"/><line x1="11" y1="13" x2="11" y2="26" stroke="var(--muted2)" stroke-width="1"/><circle cx="11" cy="26" r="2.5" fill="var(--border2)" class="buoy-base"/></svg>
+              <div style="font-size:7px;text-align:center;color:var(--muted2)" class="buoy-lbl">B-2</div>
+            </div>
+            <!-- Island -->
+            <div id="sv-island" style="position:absolute;right:5%;top:66px">
+              <svg width="78" height="96" viewBox="0 0 78 96"><ellipse cx="39" cy="78" rx="36" ry="16" fill="#1c3d1c" stroke="#2a5a2a" stroke-width="1"/><ellipse cx="39" cy="62" rx="27" ry="21" fill="#214a21" stroke="#2a5a2a" stroke-width="1"/><polygon points="29,43 39,8 49,43" fill="#2a6a2a" stroke="#3a7a3a" stroke-width="1"/><rect x="35" y="34" width="8" height="13" fill="#7a4a20" opacity=".8"/><rect x="18" y="60" width="6" height="8" fill="#1e3040" class="sv-building"/><rect x="47" y="55" width="6" height="8" fill="#1e3040" class="sv-building"/><rect x="32" y="62" width="6" height="8" fill="#1e3040" class="sv-building"/></svg>
+              <div style="font-size:8px;color:var(--green);text-align:center;letter-spacing:2px;font-weight:700">WAVARA</div>
+              <div id="sv-island-alert" style="display:none;font-size:8px;color:var(--red2);text-align:center;font-weight:700;animation:blinkAlert .7s step-end infinite">⚠ ALERT</div>
+            </div>
+            <!-- Ctrl centre -->
+            <div style="position:absolute;right:5%;bottom:14px">
+              <div id="sv-ctrl" style="width:64px;height:46px;border-radius:6px;background:var(--panel);border:1.5px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:all .4s">
+                <div style="font-size:15px">🖥️</div>
+                <div style="font-size:7px;color:var(--muted);letter-spacing:1px" id="sv-ctrl-lbl">CTRL-CTR</div>
+              </div>
+              <svg width="24" height="24" viewBox="0 0 24 24" style="margin:4px auto 0;display:block"><circle cx="12" cy="12" r="11" fill="none" stroke="rgba(125,211,199,.12)" stroke-width="1"/><circle cx="12" cy="12" r="2" fill="var(--seafoam)"/><line x1="12" y1="12" x2="12" y2="2" stroke="rgba(125,211,199,.5)" stroke-width="1" style="transform-origin:12px 12px;animation:radarSweep 3s linear infinite"/></svg>
+            </div>
+            <!-- Labels -->
+            <div style="position:absolute;top:10px;left:14px;font-size:9px;font-weight:700;letter-spacing:2px;color:rgba(125,211,199,.6);text-transform:uppercase">Surface View</div>
+            <div id="sv-arrows" style="display:none;position:absolute;top:88px;left:20%;font-size:10px;color:var(--blue)">→ Tsunami propagation</div>
+            <!-- Progress bar -->
+            <div id="sv-pbar" style="position:absolute;bottom:0;left:0;right:0;height:3px;background:var(--border);display:none">
+              <div id="sv-pfill" class="prog-fill" style="background:linear-gradient(90deg,var(--accent),var(--seafoam))"></div>
+            </div>
+            <!-- Complete banner -->
+            <div id="sv-complete" style="display:none;position:absolute;top:0;left:0;right:0;background:rgba(16,185,129,.12);border-bottom:1px solid rgba(16,185,129,.4);padding:7px;text-align:center;font-size:11px;font-weight:700;color:var(--green);letter-spacing:2px;text-transform:uppercase">✓ Simulation Complete — WaveGuard Issued 6.5 Hour Advantage</div>
+          </div>
+
+          <!-- UNDERGROUND VIEW -->
+          <div id="view-underground" style="display:none" class="panel" style="height:400px;padding:0;overflow:hidden;position:relative">
+            <div style="position:absolute;inset:0;height:400px;background:linear-gradient(180deg,#050e18 0%,#071830 40%,#3a1800 80%,#1e0d00 100%)"></div>
+            <div style="position:absolute;inset:0;height:400px;opacity:.15" class="gg"></div>
+            <div style="position:absolute;bottom:0;left:0;right:0;height:100px;background:linear-gradient(180deg,transparent,rgba(58,24,0,.8));border-top:1.5px dashed rgba(36,52,71,.5)">
+              <div style="position:absolute;top:8px;left:14px;font-size:8px;color:rgba(158,179,200,.35);letter-spacing:2px;text-transform:uppercase">Earth's Crust — Oceanic Plate</div>
+            </div>
+            <!-- EQ epicentre underground -->
+            <div style="position:absolute;left:16%;bottom:95px;transform:translateX(-50%)">
+              <svg width="36" height="38" viewBox="0 0 36 38"><polygon points="18,3 34,35 2,35" fill="none" stroke="var(--red2)" stroke-width="1.5"/><text x="18" y="26" text-anchor="middle" fill="var(--red2)" font-size="13" font-family="monospace">!</text></svg>
+              <div id="ug-pulses"></div>
+            </div>
+            <!-- Seismic wave rings SVG -->
+            <svg id="ug-rings-svg" style="position:absolute;left:16%;bottom:95px;transform:translateX(-50%)" width="1" height="1" viewBox="-120 -120 240 240" overflow="visible">
+              <circle id="ugr1" cx="0" cy="0" r="0" fill="none" stroke="var(--amber)" stroke-width="2" opacity=".7"/>
+              <circle id="ugr2" cx="0" cy="0" r="0" fill="none" stroke="var(--amber)" stroke-width="1.5" opacity=".5"/>
+              <circle id="ugr3" cx="0" cy="0" r="0" fill="none" stroke="var(--amber)" stroke-width="1" opacity=".3"/>
+            </svg>
+            <!-- P-wave dot -->
+            <div id="ug-swave" style="position:absolute;bottom:90px;left:16%;display:none;transform:translateX(-50%)">
+              <div style="width:24px;height:24px;border-radius:50%;background:radial-gradient(circle,rgba(245,158,11,.75),transparent);border:2px solid var(--amber);box-shadow:0 0 16px var(--amber)"></div>
+              <div style="font-size:7px;color:var(--amber);text-align:center;margin-top:3px;font-weight:700;letter-spacing:1px">P-WAVE<br/><span class="mono" style="font-size:7px;color:var(--muted)">14,000 km/h</span></div>
+            </div>
+            <!-- Underground sensors -->
+            <div style="position:absolute;left:34%;bottom:99px;transform:translateX(-50%)">
+              <div class="ug-sensor" style="width:16px;height:16px;border-radius:2px;background:var(--panel2);border:1.5px solid var(--muted2);display:flex;align-items:center;justify-content:center;font-size:8px;color:var(--muted2);transition:all .4s">▲</div>
+              <div style="font-size:7px;text-align:center;color:var(--muted2);margin-top:2px">S1</div>
+            </div>
+            <div style="position:absolute;left:48%;bottom:99px;transform:translateX(-50%)">
+              <div class="ug-sensor" style="width:16px;height:16px;border-radius:2px;background:var(--panel2);border:1.5px solid var(--muted2);display:flex;align-items:center;justify-content:center;font-size:8px;color:var(--muted2);transition:all .4s">▲</div>
+              <div style="font-size:7px;text-align:center;color:var(--muted2);margin-top:2px">S2</div>
+            </div>
+            <div style="position:absolute;top:10px;left:14px;font-size:9px;font-weight:700;letter-spacing:2px;color:rgba(245,158,11,.6);text-transform:uppercase">Underground View — Seismic P-Wave</div>
+            <div id="ug-pbar" style="position:absolute;bottom:0;left:0;right:0;height:3px;background:var(--border);display:none"><div id="ug-pfill" class="prog-fill" style="background:linear-gradient(90deg,var(--amber2),var(--amber))"></div></div>
+          </div>
+
+          <!-- SATELLITE VIEW -->
+          <div id="view-satellite" style="display:none" class="panel" style="height:400px;padding:0;overflow:hidden;position:relative">
+            <div style="position:absolute;inset:0;height:400px;background:radial-gradient(ellipse at 50% 50%,#0c1e34 0%,#040c14 100%)"></div>
+            <div style="position:absolute;inset:0;height:400px;opacity:.1" class="gg"></div>
+            <svg width="100%" height="400" viewBox="0 0 610 400" style="position:absolute;inset:0">
+              <rect x="0" y="0" width="610" height="400" fill="#020c14" fill-opacity=".5"/>
+              <!-- Grid -->
+              <g opacity=".08" stroke="var(--seafoam2)" stroke-width=".4">
+                <line x1="100" y1="0" x2="100" y2="400"/><line x1="200" y1="0" x2="200" y2="400"/>
+                <line x1="300" y1="0" x2="300" y2="400"/><line x1="400" y1="0" x2="400" y2="400"/>
+                <line x1="500" y1="0" x2="500" y2="400"/>
+                <line x1="0" y1="80" x2="610" y2="80"/><line x1="0" y1="160" x2="610" y2="160"/>
+                <line x1="0" y1="240" x2="610" y2="240"/><line x1="0" y1="320" x2="610" y2="320"/>
+              </g>
+              <!-- Epicentre -->
+              <circle cx="100" cy="200" r="8" fill="var(--red2)" fill-opacity=".9"/>
+              <circle id="sat-r1" cx="100" cy="200" r="0" fill="none" stroke="var(--red2)" stroke-width="2" style="animation:pulseRing 2s ease-out infinite"/>
+              <circle id="sat-r2" cx="100" cy="200" r="0" fill="none" stroke="var(--red2)" stroke-width="1.5" style="animation:pulseRing 2s ease-out infinite;animation-delay:.65s"/>
+              <!-- Tsunami ring -->
+              <circle id="sat-tsunami-ring" cx="100" cy="200" r="0" fill="none" stroke="var(--blue)" stroke-width="2.5" stroke-opacity=".8"/>
+              <!-- Buoys -->
+              <circle cx="270" cy="190" r="6" fill="var(--seafoam2)" fill-opacity=".7" stroke="var(--seafoam)" stroke-width="1" id="sat-b1"/>
+              <circle cx="360" cy="210" r="6" fill="var(--seafoam2)" fill-opacity=".7" stroke="var(--seafoam)" stroke-width="1" id="sat-b2"/>
+              <!-- Island -->
+              <ellipse cx="488" cy="200" rx="42" ry="28" fill="#1e3a1e" stroke="#2a5a2a" stroke-width="1.5"/>
+              <text id="sat-warn" x="488" y="205" text-anchor="middle" fill="var(--red2)" font-size="14" font-family="monospace" style="display:none;animation:blinkAlert .8s step-end infinite">⚠</text>
+              <text x="80" y="220" fill="rgba(239,68,68,.6)" font-size="9" font-family="monospace">EQ ZONE</text>
+              <text x="256" y="180" fill="var(--seafoam2)" font-size="9" font-family="monospace">B1</text>
+              <text x="345" y="200" fill="var(--seafoam2)" font-size="9" font-family="monospace">B2</text>
+              <text x="466" y="240" fill="var(--green)" font-size="9" font-family="monospace">WAVARA</text>
+              <!-- Scale bar -->
+              <line x1="20" y1="375" x2="120" y2="375" stroke="rgba(158,179,200,.3)" stroke-width="1"/>
+              <text x="20" y="372" fill="rgba(158,179,200,.4)" font-size="7" font-family="monospace">0</text>
+              <text x="100" y="372" fill="rgba(158,179,200,.4)" font-size="7" font-family="monospace">3500 km</text>
+            </svg>
+            <div style="position:absolute;top:10px;left:14px;font-size:9px;font-weight:700;letter-spacing:2px;color:rgba(125,211,199,.6);text-transform:uppercase">Satellite View — Top Down</div>
+          </div>
+
+          <!-- CROSS-SECTION VIEW -->
+          <div id="view-cross" style="display:none" class="panel" style="height:400px;padding:0;overflow:hidden;position:relative">
+            <div style="position:absolute;inset:0;height:400px;background:linear-gradient(180deg,#050e18 0%,#071a2e 30%,#09244a 55%,#3a1800 78%,#1e0d00 100%)"></div>
+            <div style="position:absolute;inset:0;height:400px;opacity:.12" class="gg"></div>
+            <!-- Ocean surface line -->
+            <div style="position:absolute;top:132px;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(125,211,199,.3),rgba(59,130,246,.3),transparent)"></div>
+            <!-- Seafloor dashed line -->
+            <div style="position:absolute;bottom:88px;left:0;right:0;height:1.5px;border-top:1.5px dashed rgba(36,52,71,.6)"></div>
+            <div style="position:absolute;bottom:92px;left:14px;font-size:7px;color:rgba(158,179,200,.3);letter-spacing:2px;text-transform:uppercase">Seafloor</div>
+            <div style="position:absolute;top:136px;left:14px;font-size:7px;color:rgba(125,211,199,.3);letter-spacing:2px;text-transform:uppercase">Ocean</div>
+            <div style="position:absolute;bottom:55px;left:14px;font-size:7px;color:rgba(158,179,200,.25);letter-spacing:2px;text-transform:uppercase">Crust</div>
+            <!-- EQ epicentre cross -->
+            <div style="position:absolute;left:16%;bottom:90px;transform:translateX(-50%)">
+              <svg width="32" height="34" viewBox="0 0 32 34"><polygon points="16,3 30,31 2,31" fill="none" stroke="var(--red2)" stroke-width="1.4"/><text x="16" y="23" text-anchor="middle" fill="var(--red2)" font-size="12" font-family="monospace">!</text></svg>
+              <div id="cross-pulses"></div>
+            </div>
+            <!-- P-wave dot cross -->
+            <div id="cs-swave" style="position:absolute;bottom:84px;left:16%;display:none;transform:translateX(-50%)">
+              <div style="width:20px;height:20px;border-radius:50%;background:radial-gradient(circle,rgba(245,158,11,.7),transparent);border:2px solid var(--amber);box-shadow:0 0 12px var(--amber)"></div>
+              <div style="font-size:7px;color:var(--amber);text-align:center;margin-top:3px;font-weight:700">P-WAVE</div>
+            </div>
+            <!-- Tsunami cross -->
+            <div id="cs-tsunami" style="position:absolute;top:108px;left:16%;display:none;transform:translateX(-50%)">
+              <svg width="48" height="46" viewBox="0 0 48 46"><path d="M0,38 Q12,6 24,20 Q36,34 48,8 L48,46 L0,46 Z" fill="rgba(59,130,246,.3)" stroke="var(--blue)" stroke-width="1.5"/></svg>
+              <div style="font-size:7px;color:var(--blue);text-align:center;font-weight:700">WAVE</div>
+            </div>
+            <!-- Sensors cross -->
+            <div style="position:absolute;left:34%;bottom:90px;transform:translateX(-50%)">
+              <div class="cs-sensor" style="width:15px;height:15px;border-radius:2px;background:var(--panel2);border:1.5px solid var(--muted2);display:flex;align-items:center;justify-content:center;font-size:7px;color:var(--muted2);transition:all .4s">▲</div>
+            </div>
+            <div style="position:absolute;left:48%;bottom:90px;transform:translateX(-50%)">
+              <div class="cs-sensor" style="width:15px;height:15px;border-radius:2px;background:var(--panel2);border:1.5px solid var(--muted2);display:flex;align-items:center;justify-content:center;font-size:7px;color:var(--muted2);transition:all .4s">▲</div>
+            </div>
+            <!-- Buoys cross -->
+            <div style="position:absolute;left:44%;top:116px;transform:translateX(-50%);animation:buoyBob 3s ease-in-out infinite">
+              <svg width="18" height="24" viewBox="0 0 18 24"><ellipse cx="9" cy="7" rx="5.5" ry="3.5" fill="rgba(27,42,58,.8)" stroke="var(--muted2)" stroke-width="1.2" class="cs-buoy-top"/><line x1="9" y1="10" x2="9" y2="20" stroke="var(--muted2)" stroke-width=".8"/><circle cx="9" cy="20" r="2" fill="var(--border2)" class="cs-buoy-top"/></svg>
+            </div>
+            <div style="position:absolute;left:60%;top:116px;transform:translateX(-50%);animation:buoyBob 3s ease-in-out infinite;animation-delay:.6s">
+              <svg width="18" height="24" viewBox="0 0 18 24"><ellipse cx="9" cy="7" rx="5.5" ry="3.5" fill="rgba(27,42,58,.8)" stroke="var(--muted2)" stroke-width="1.2" class="cs-buoy-top"/><line x1="9" y1="10" x2="9" y2="20" stroke="var(--muted2)" stroke-width=".8"/><circle cx="9" cy="20" r="2" fill="var(--border2)" class="cs-buoy-top"/></svg>
+            </div>
+            <!-- Island cross -->
+            <div style="position:absolute;right:6%;top:70px">
+              <svg width="68" height="88" viewBox="0 0 68 88"><ellipse cx="34" cy="72" rx="30" ry="14" fill="#1c3d1c" stroke="#2a5a2a" stroke-width="1"/><ellipse cx="34" cy="58" rx="23" ry="18" fill="#214a21" stroke="#2a5a2a" stroke-width="1"/><polygon points="26,40 34,8 42,40" fill="#2a6a2a" stroke="#3a7a3a" stroke-width="1"/><rect x="30" y="30" width="7" height="12" fill="#7a4a20" opacity=".8"/></svg>
+              <div style="font-size:7px;color:var(--green);text-align:center;letter-spacing:2px;font-weight:700">WAVARA</div>
+            </div>
+            <div style="position:absolute;top:10px;left:14px;font-size:9px;font-weight:700;letter-spacing:2px;color:rgba(125,211,199,.6);text-transform:uppercase">Cross-Section View</div>
+            <div id="cs-pbar" style="position:absolute;bottom:0;left:0;right:0;height:3px;background:var(--border);display:none"><div id="cs-pfill" class="prog-fill" style="background:linear-gradient(90deg,var(--accent),var(--seafoam))"></div></div>
+          </div>
+
+          <!-- DASHBOARD VIEW -->
+          <div id="view-dashboard" style="display:none" class="panel" style="height:400px;padding:12px">
+            <div style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:10px;height:100%">
+              <div id="db-s" style="border:1px solid var(--border);border-radius:8px;padding:12px;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:all .4s">
+                <div style="font-size:24px;margin-bottom:8px">📡</div>
+                <svg width="44" height="44" viewBox="0 0 44 44"><circle cx="22" cy="22" r="20" fill="none" stroke="rgba(125,211,199,.1)" stroke-width="1"/><circle cx="22" cy="22" r="12" fill="none" stroke="rgba(125,211,199,.15)" stroke-width="1"/><circle cx="22" cy="22" r="3" fill="var(--seafoam2)"/><line x1="22" y1="22" x2="22" y2="4" stroke="rgba(125,211,199,.45)" stroke-width="1" style="transform-origin:22px 22px;animation:radarSweep 3s linear infinite"/></svg>
+                <div id="db-s-lbl" style="font-size:9px;font-weight:700;letter-spacing:2px;color:var(--muted);margin-top:8px;text-transform:uppercase">SEISMIC NET</div>
+                <div id="db-s-st" style="font-size:9px;color:var(--border2);margin-top:4px">○ Standby</div>
+              </div>
+              <div id="db-b" style="border:1px solid var(--border);border-radius:8px;padding:12px;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:all .4s">
+                <div style="font-size:24px;margin-bottom:8px">🌊</div>
+                <svg width="44" height="44" viewBox="0 0 44 44"><circle cx="22" cy="22" r="20" fill="none" stroke="rgba(59,130,246,.1)" stroke-width="1"/><circle cx="22" cy="22" r="12" fill="none" stroke="rgba(59,130,246,.15)" stroke-width="1"/><circle cx="22" cy="22" r="3" fill="var(--blue)"/><line x1="22" y1="22" x2="22" y2="4" stroke="rgba(59,130,246,.4)" stroke-width="1" style="transform-origin:22px 22px;animation:radarSweep 4s linear infinite reverse"/></svg>
+                <div id="db-b-lbl" style="font-size:9px;font-weight:700;letter-spacing:2px;color:var(--muted);margin-top:8px;text-transform:uppercase">BUOY NET</div>
+                <div id="db-b-st" style="font-size:9px;color:var(--border2);margin-top:4px">○ Standby</div>
+              </div>
+              <div id="db-h" style="border:1px solid var(--border);border-radius:8px;padding:12px;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:all .4s">
+                <div style="font-size:24px;margin-bottom:8px">🧠</div>
+                <svg width="44" height="44" viewBox="0 0 44 44"><circle cx="22" cy="22" r="20" fill="none" stroke="rgba(245,158,11,.1)" stroke-width="1"/><circle cx="22" cy="22" r="12" fill="none" stroke="rgba(245,158,11,.15)" stroke-width="1"/><circle cx="22" cy="22" r="3" fill="var(--amber)"/><line x1="22" y1="22" x2="22" y2="4" stroke="rgba(245,158,11,.4)" stroke-width="1" style="transform-origin:22px 22px;animation:radarSweep 2.5s linear infinite"/></svg>
+                <div id="db-h-lbl" style="font-size:9px;font-weight:700;letter-spacing:2px;color:var(--muted);margin-top:8px;text-transform:uppercase">HYBRID AI</div>
+                <div id="db-h-st" style="font-size:9px;color:var(--border2);margin-top:4px">○ Standby</div>
+              </div>
+              <div id="db-a" style="border:1px solid var(--border);border-radius:8px;padding:12px;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:all .4s">
+                <div style="font-size:24px;margin-bottom:8px">⚠️</div>
+                <svg width="44" height="44" viewBox="0 0 44 44"><circle cx="22" cy="22" r="20" fill="none" stroke="rgba(220,38,38,.1)" stroke-width="1"/><circle cx="22" cy="22" r="12" fill="none" stroke="rgba(220,38,38,.15)" stroke-width="1"/><circle cx="22" cy="22" r="3" fill="var(--red2)"/><line x1="22" y1="22" x2="22" y2="4" stroke="rgba(220,38,38,.4)" stroke-width="1" style="transform-origin:22px 22px;animation:radarSweep 3.5s linear infinite reverse"/></svg>
+                <div id="db-a-lbl" style="font-size:9px;font-weight:700;letter-spacing:2px;color:var(--muted);margin-top:8px;text-transform:uppercase">ALERT SYS</div>
+                <div id="db-a-st" style="font-size:9px;color:var(--border2);margin-top:4px">○ Standby</div>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- end sim-canvas -->
+
+        <!-- RIGHT SIDEBAR -->
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <!-- Live data -->
+          <div class="panel">
+            <div class="sec-title">Live Calculations</div>
+            <div style="display:flex;flex-direction:column;gap:0">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)">
+                <span style="font-size:10px;color:var(--muted)">Seismic Detection</span>
+                <span class="mono" id="dr-seis" style="font-size:15px;color:var(--muted)">—<span style="font-size:9px"> min</span></span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)">
+                <span style="font-size:10px;color:var(--muted)">Buoy Confirmation</span>
+                <span class="mono" id="dr-buoy" style="font-size:15px;color:var(--muted)">—<span style="font-size:9px"> min</span></span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)">
+                <span style="font-size:10px;color:var(--muted)">Tsunami Arrival</span>
+                <span class="mono" id="dr-arrival" style="font-size:15px;color:var(--muted)">—<span style="font-size:9px"> hrs</span></span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)">
+                <span style="font-size:10px;color:var(--muted)">Warning Advantage</span>
+                <span class="mono" id="dr-adv" style="font-size:15px;color:var(--green)">—<span style="font-size:9px"> hrs</span></span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)">
+                <span style="font-size:10px;color:var(--muted)">Reliability</span>
+                <span class="mono" id="dr-rel" style="font-size:15px;color:var(--green)">—<span style="font-size:9px">%</span></span>
+              </div>
+            </div>
+            <!-- Threat level -->
+            <div style="margin-top:12px">
+              <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+                <span style="font-size:8px;font-weight:700;letter-spacing:2px;color:var(--seafoam);text-transform:uppercase">Threat Level</span>
+                <span id="threat-lbl" style="font-size:8px;font-weight:700;letter-spacing:2px;color:var(--green);text-transform:uppercase">NOMINAL</span>
+              </div>
+              <div class="threat-bar"><div class="threat-fill" id="threat-fill" style="width:0%;background:var(--green)"></div></div>
+            </div>
+            <!-- Emergency panel -->
+            <div id="emerg-panel" style="display:none;margin-top:12px;padding:10px;background:rgba(220,38,38,.08);border:1px solid rgba(239,68,68,.3);border-radius:6px;text-align:center">
+              <div style="color:var(--red2);font-size:13px;font-weight:800;letter-spacing:2px;animation:blinkAlert .8s step-end infinite">TSUNAMI WARNING<br/>ISSUED FOR WAVARA</div>
+              <div style="font-size:9px;color:var(--text);margin-top:6px">Hybrid advantage: <strong style="color:var(--green)" id="adv-display">6.5 hrs</strong></div>
+            </div>
+          </div>
+
+          <!-- Sensor status -->
+          <div class="panel">
+            <div class="sec-title">Sensor Network</div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border)">
+                <span style="font-size:9px;color:var(--muted)">SEISMIC-1</span>
+                <span class="s-status" data-id="s1" style="font-size:9px;color:var(--border2)">○ Standby</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border)">
+                <span style="font-size:9px;color:var(--muted)">SEISMIC-2</span>
+                <span class="s-status" data-id="s2" style="font-size:9px;color:var(--border2)">○ Standby</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border)">
+                <span style="font-size:9px;color:var(--muted)">BUOY-ALPHA</span>
+                <span class="s-status" data-id="b1" style="font-size:9px;color:var(--border2)">○ Standby</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border)">
+                <span style="font-size:9px;color:var(--muted)">BUOY-BETA</span>
+                <span class="s-status" data-id="b2" style="font-size:9px;color:var(--border2)">○ Standby</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0">
+                <span style="font-size:9px;color:var(--muted)">WARNING SYS</span>
+                <span class="s-status" data-id="warn" style="font-size:9px;color:var(--border2)">○ Standby</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Detection log -->
+          <div class="panel">
+            <div class="sec-title">Event Log</div>
+            <div id="event-log" class="mono" style="font-size:9px;color:var(--muted);line-height:1.9;max-height:140px;overflow-y:auto">
+              <div>System standby...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Timeline visualization -->
+      <div class="panel" style="margin-bottom:14px">
+        <div class="sec-title">Detection &amp; Warning Timeline — 7,000 km Distance</div>
+        <div style="position:relative;padding:20px 0 10px">
+          <!-- Timeline bar -->
+          <div style="position:relative;height:28px;background:rgba(36,52,71,.5);border-radius:4px;overflow:hidden;margin-bottom:28px">
+            <div style="position:absolute;left:0;top:0;bottom:0;width:7.1%;background:linear-gradient(90deg,rgba(245,158,11,.7),rgba(245,158,11,.5));border-right:2px solid var(--amber)" title="Seismic detected: 30 min"></div>
+            <div id="tl-tsunami-fill" style="position:absolute;left:0;top:0;bottom:0;width:0;background:linear-gradient(90deg,rgba(59,130,246,.25),rgba(59,130,246,.15));transition:width 8s linear"></div>
+            <div style="position:absolute;left:7.1%;top:50%;transform:translateY(-50%);width:2px;height:100%;background:var(--amber)"></div>
+            <div style="position:absolute;left:100%;top:50%;transform:translate(-2px,-50%);width:2px;height:100%;background:var(--blue)"></div>
+          </div>
+          <!-- Labels -->
+          <div style="display:flex;justify-content:space-between;margin-top:-20px;font-size:8px;color:var(--muted)">
+            <div style="text-align:center;max-width:80px">
+              <div style="color:var(--amber);font-weight:700">T + 30 min</div>
+              <div>Seismic detection</div>
+              <div style="color:var(--muted2)">14,000 km/h</div>
+            </div>
+            <div style="text-align:center">
+              <div style="color:var(--muted2);font-size:7px">← 6.5 hour evacuation window →</div>
+              <div style="color:var(--green);font-weight:700;font-size:11px">HYBRID ADVANTAGE</div>
+            </div>
+            <div style="text-align:center;max-width:80px">
+              <div style="color:var(--blue);font-weight:700">T + 7.0 hrs</div>
+              <div>Tsunami arrives</div>
+              <div style="color:var(--muted2)">1,000 km/h</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div class="g3">
+        <div class="panel">
+          <div class="sec-title">Earthquake Controls</div>
+          <div style="margin-bottom:12px">
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:8px;font-weight:700;letter-spacing:1.5px;color:var(--muted2);text-transform:uppercase">Magnitude</span><span class="mono" style="font-size:12px;color:var(--seafoam)" id="v-mag">7.2 M</span></div>
+            <input type="range" min="5" max="9" step="0.1" value="7.2" id="sl-mag" oninput="updateParams()"/>
+          </div>
+          <div style="margin-bottom:12px">
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:8px;font-weight:700;letter-spacing:1.5px;color:var(--muted2);text-transform:uppercase">Distance (km)</span><span class="mono" style="font-size:12px;color:var(--seafoam)" id="v-dist">7000 km</span></div>
+            <input type="range" min="1000" max="12000" step="100" value="7000" id="sl-dist" oninput="updateParams()"/>
+          </div>
+          <div style="padding:10px;background:var(--bg);border-radius:6px;border:1px solid var(--border)">
+            <div class="mono" style="color:var(--seafoam2);font-size:12px">t = d/v</div>
+            <div style="font-size:9px;color:var(--muted);margin-top:3px" id="f-eq-val">t = 7000/14000 = 0.50 hrs = 30 min</div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="sec-title">Ocean Controls</div>
+          <div style="margin-bottom:12px">
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:8px;font-weight:700;letter-spacing:1.5px;color:var(--muted2);text-transform:uppercase">Seismic Speed</span><span class="mono" style="font-size:12px;color:var(--amber)" id="v-sspd">14000 km/h</span></div>
+            <input type="range" min="5000" max="25000" step="500" value="14000" id="sl-sspd" oninput="updateParams()"/>
+          </div>
+          <div style="margin-bottom:12px">
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:8px;font-weight:700;letter-spacing:1.5px;color:var(--muted2);text-transform:uppercase">Tsunami Speed</span><span class="mono" style="font-size:12px;color:var(--blue)" id="v-tspd">1000 km/h</span></div>
+            <input type="range" min="200" max="1200" step="25" value="1000" id="sl-tspd" oninput="updateParams()"/>
+          </div>
+          <div style="padding:10px;background:var(--bg);border-radius:6px;border:1px solid var(--border)">
+            <div class="mono" style="color:var(--seafoam2);font-size:12px">v = √(g·d)</div>
+            <div style="font-size:9px;color:var(--muted);margin-top:3px" id="f-ts-val">√(9.81×10200) ≈ 316 m/s ≈ 1000 km/h</div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="sec-title">Sensor Controls</div>
+          <div style="margin-bottom:12px">
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:8px;font-weight:700;letter-spacing:1.5px;color:var(--muted2);text-transform:uppercase">Ocean Depth</span><span class="mono" style="font-size:12px;color:var(--seafoam)" id="v-depth">4000 m</span></div>
+            <input type="range" min="500" max="12000" step="100" value="4000" id="sl-depth" oninput="updateParams()"/>
+          </div>
+          <div style="margin-bottom:12px">
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:8px;font-weight:700;letter-spacing:1.5px;color:var(--muted2);text-transform:uppercase">Buoy Sensitivity</span><span class="mono" style="font-size:12px;color:var(--blue)" id="v-bsens">80%</span></div>
+            <input type="range" min="10" max="100" step="1" value="80" id="sl-bsens" oninput="updateParams()"/>
+          </div>
+          <div style="padding:10px;background:var(--bg);border-radius:6px;border:1px solid var(--border)">
+            <div style="font-size:9px;color:var(--muted);margin-bottom:4px;font-weight:700;letter-spacing:1px">TIMING</div>
+            <div class="mono" id="timing-lines" style="font-size:9px;color:var(--text);line-height:1.8">
+              T+30 min: Seismic alert<br/>
+              T+7.0 hrs: Tsunami arrives
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ──────────────────────────────────────── PAGE: WAVE ── -->
+  <div id="page-wave" class="page">
+    <div class="wrap">
+      <div class="section-head"><span style="font-size:22px">〰️</span><h2>Wave Science</h2></div>
+
+      <!-- Interactive wave -->
+      <div class="panel" style="margin-bottom:16px">
+        <div class="sec-title">Interactive Wave Diagram</div>
+        <div style="display:flex;gap:16px;margin-bottom:14px;flex-wrap:wrap">
+          <div style="flex:1;min-width:200px">
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:8px;font-weight:700;letter-spacing:1.5px;color:var(--muted2);text-transform:uppercase">Frequency</span><span class="mono" style="font-size:12px;color:var(--amber)" id="ws-fv">1 Hz</span></div>
+            <input type="range" min="0.5" max="4" step="0.1" value="1" id="ws-f" oninput="updateWaveScience()"/>
+          </div>
+          <div style="flex:1;min-width:200px">
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:8px;font-weight:700;letter-spacing:1.5px;color:var(--muted2);text-transform:uppercase">Amplitude</span><span class="mono" style="font-size:12px;color:var(--red2)" id="ws-av">30</span></div>
+            <input type="range" min="10" max="44" step="1" value="30" id="ws-a" oninput="updateWaveScience()"/>
+          </div>
+        </div>
+        <svg id="wave-sci-svg" width="100%" viewBox="0 0 560 105" style="overflow:visible">
+          <line x1="0" y1="52" x2="560" y2="52" stroke="var(--border2)" stroke-width="1"/>
+          <path id="ws-path" d="" fill="none" stroke="var(--seafoam2)" stroke-width="2.5"/>
+          <line id="ws-wl-line" x1="0" y1="63" x2="140" y2="63" stroke="var(--seafoam)" stroke-width="1.5"/>
+          <text id="ws-wl-txt" x="70" y="75" text-anchor="middle" fill="var(--seafoam)" font-size="10" font-family="monospace">λ</text>
+          <line x1="8" y1="52" x2="8" y2="22" stroke="var(--red2)" stroke-width="1.5" stroke-dasharray="3 2"/>
+          <text x="16" y="38" fill="var(--red2)" font-size="10" font-family="monospace">A</text>
+          <circle id="ws-crest" cx="140" cy="22" r="4.5" fill="var(--seafoam)" style="filter:drop-shadow(0 0 5px var(--seafoam))"/>
+        </svg>
+        <div class="mono" style="color:var(--muted2);font-size:10px;text-align:center;margin-top:6px" id="ws-formula">v = fλ  ·  f = 1 Hz  ·  T = 1.00 s  ·  v ∝ √depth</div>
+      </div>
+
+      <!-- Concept cards -->
+      <div class="g4" style="margin-bottom:16px">
+        <div class="panel concept-c" onmouseenter="showC(this,'Amplitude','Maximum displacement from equilibrium. Deep-ocean tsunami amplitudes are just 0.3–1m. Near shore, shoaling causes amplitudes to grow to 30–40m due to energy conservation. A = E/ρvg.')" onmouseleave="hideC(this)" style="cursor:pointer;transition:all .3s">
+          <div style="font-size:9px;font-weight:700;letter-spacing:1.5px;color:var(--red2);margin-bottom:6px;text-transform:uppercase">Amplitude</div>
+          <div class="cc-body" style="font-size:9px;color:var(--muted)">Hover to learn →</div>
+        </div>
+        <div class="panel concept-c" onmouseenter="showC(this,'Wavelength (λ)','Distance between two consecutive crests. Symbol: λ. Tsunami wavelengths reach 200–500 km. Wind waves: ~100m. Long wavelength = wave cannot fully orbit in shallow water = SHOALING.')" onmouseleave="hideC(this)" style="cursor:pointer;transition:all .3s">
+          <div style="font-size:9px;font-weight:700;letter-spacing:1.5px;color:var(--seafoam);margin-bottom:6px;text-transform:uppercase">Wavelength λ</div>
+          <div class="cc-body" style="font-size:9px;color:var(--muted)">Hover to learn →</div>
+        </div>
+        <div class="panel concept-c" onmouseenter="showC(this,'Frequency (f)','Waves per second. Measured in Hertz. f = 1/T. Tsunami: ~0.00003 Hz (one wave every 10–60 min). Higher frequency = shorter wavelength if speed is constant (v=fλ).')" onmouseleave="hideC(this)" style="cursor:pointer;transition:all .3s">
+          <div style="font-size:9px;font-weight:700;letter-spacing:1.5px;color:var(--amber);margin-bottom:6px;text-transform:uppercase">Frequency f</div>
+          <div class="cc-body" style="font-size:9px;color:var(--muted)">Hover to learn →</div>
+        </div>
+        <div class="panel concept-c" onmouseenter="showC(this,'Time Period (T)','Time for one complete wave cycle. T = 1/f. Tsunami period: 10–60 minutes. Ocean swell: 10–20 seconds. Wind waves: 1–5 seconds. Longer period = more water displacement = more destructive.')" onmouseleave="hideC(this)" style="cursor:pointer;transition:all .3s">
+          <div style="font-size:9px;font-weight:700;letter-spacing:1.5px;color:var(--green);margin-bottom:6px;text-transform:uppercase">Period T</div>
+          <div class="cc-body" style="font-size:9px;color:var(--muted)">Hover to learn →</div>
+        </div>
+        <div class="panel concept-c" onmouseenter="showC(this,'Transverse Waves','Particles oscillate PERPENDICULAR to wave travel. Examples: light, water surface waves, seismic S-waves, tsunami surface waves. Can travel through solids, liquids, and vacuums (EM waves).')" onmouseleave="hideC(this)" style="cursor:pointer;transition:all .3s">
+          <div style="font-size:9px;font-weight:700;letter-spacing:1.5px;color:var(--seafoam2);margin-bottom:6px;text-transform:uppercase">Transverse</div>
+          <div class="cc-body" style="font-size:9px;color:var(--muted)">Hover to learn →</div>
+        </div>
+        <div class="panel concept-c" onmouseenter="showC(this,'Longitudinal Waves','Particles oscillate PARALLEL to wave travel (compression/rarefaction). Examples: sound, seismic P-waves. P-waves travel at 14,000 km/h — faster than S-waves because rock is more rigid than it is resistant to compression.')" onmouseleave="hideC(this)" style="cursor:pointer;transition:all .3s">
+          <div style="font-size:9px;font-weight:700;letter-spacing:1.5px;color:var(--amber);margin-bottom:6px;text-transform:uppercase">Longitudinal</div>
+          <div class="cc-body" style="font-size:9px;color:var(--muted)">Hover to learn →</div>
+        </div>
+        <div class="panel concept-c" onmouseenter="showC(this,'Energy Transfer','Waves transfer energy without permanently moving matter. Water particles move in circles as a wave passes — the energy travels, the medium does not. Buoys prove this: they bob in place as a 1000 km/h tsunami passes underneath.')" onmouseleave="hideC(this)" style="cursor:pointer;transition:all .3s">
+          <div style="font-size:9px;font-weight:700;letter-spacing:1.5px;color:#a78bfa;margin-bottom:6px;text-transform:uppercase">Energy Transfer</div>
+          <div class="cc-body" style="font-size:9px;color:var(--muted)">Hover to learn →</div>
+        </div>
+        <div class="panel concept-c" onmouseenter="showC(this,'Wave Speed','v = fλ (all waves). v = √(gd) (tsunamis in shallow water). At d=4000m: v=198 m/s=712 km/h. At d=10200m: v=316 m/s≈1000 km/h. Seismic P-wave: 14,000 km/h — 14× faster.')" onmouseleave="hideC(this)" style="cursor:pointer;transition:all .3s">
+          <div style="font-size:9px;font-weight:700;letter-spacing:1.5px;color:var(--blue);margin-bottom:6px;text-transform:uppercase">Wave Speed</div>
+          <div class="cc-body" style="font-size:9px;color:var(--muted)">Hover to learn →</div>
+        </div>
+      </div>
+
+      <!-- T vs L animated -->
+      <div class="g2">
+        <div class="panel">
+          <div class="sec-title" style="color:var(--seafoam2)">Transverse Wave — S-wave / Ocean Surface</div>
+          <svg id="tv-svg" width="100%" viewBox="0 0 520 100">
+            <line x1="0" y1="50" x2="520" y2="50" stroke="var(--border2)" stroke-width="1" stroke-dasharray="4 3"/>
+            <path id="tv-path" d="" fill="none" stroke="var(--seafoam2)" stroke-width="2"/>
+            <text x="10" y="14" fill="var(--muted2)" font-size="9" font-family="monospace">▶ Direction of travel</text>
+            <text x="10" y="94" fill="var(--seafoam2)" font-size="9" font-family="monospace">↕ Particle motion (perpendicular) — Light, Surface Waves, S-waves</text>
+          </svg>
+        </div>
+        <div class="panel">
+          <div class="sec-title" style="color:var(--amber)">Longitudinal Wave — P-wave / Sound / Seismic</div>
+          <svg id="lv-svg" width="100%" viewBox="0 0 520 100">
+            <line x1="0" y1="50" x2="520" y2="50" stroke="var(--border2)" stroke-width="1" stroke-dasharray="4 3"/>
+            <g id="lv-dots"></g>
+            <text x="10" y="14" fill="var(--muted2)" font-size="9" font-family="monospace">▶ Direction of travel</text>
+            <text x="10" y="94" fill="var(--amber)" font-size="9" font-family="monospace">↔ Particle motion (parallel) — Sound, P-waves, Compression waves</text>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ──────────────────────────────────────── PAGE: EQUATION ── -->
+  <div id="page-equation" class="page">
+    <div class="wrap">
+      <div class="section-head"><span style="font-size:22px">📐</span><h2>Wave Equation — v = fλ</h2></div>
+      <div class="panel">
+        <div class="sec-title">Interactive Visualiser</div>
+        <div style="display:flex;gap:24px;align-items:center;margin-bottom:20px;flex-wrap:wrap">
+          <div style="padding:20px 32px;background:var(--bg);border-radius:10px;border:1px solid var(--border);text-align:center">
+            <div style="font-size:44px;font-weight:900;letter-spacing:2px;background:linear-gradient(135deg,var(--seafoam),#d8f5f2,var(--seafoam2));-webkit-background-clip:text;-webkit-text-fill-color:transparent">v = fλ</div>
+          </div>
+          <div style="flex:1;min-width:220px">
+            <div style="margin-bottom:12px">
+              <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:8px;font-weight:700;letter-spacing:1.5px;color:var(--muted2);text-transform:uppercase">Frequency (f)</span><span class="mono" style="font-size:12px;color:var(--amber)" id="eq-fv">2 Hz</span></div>
+              <input type="range" min="0.5" max="5" step="0.1" value="2" id="eq-f" oninput="updateEq()"/>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:8px;font-weight:700;letter-spacing:1.5px;color:var(--muted2);text-transform:uppercase">Wavelength (λ)</span><span class="mono" style="font-size:12px;color:var(--seafoam)" id="eq-wv">80 m</span></div>
+              <input type="range" min="20" max="200" step="5" value="80" id="eq-w" oninput="updateEq()"/>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:9px">
+            <div style="padding:8px 16px;background:var(--bg);border-radius:6px;border:1px solid rgba(245,158,11,.2);min-width:140px"><div style="font-size:8px;color:var(--muted);letter-spacing:1px">Frequency</div><div class="mono" id="eq-f-disp" style="color:var(--amber);font-size:16px;font-weight:700">2 Hz</div></div>
+            <div style="padding:8px 16px;background:var(--bg);border-radius:6px;border:1px solid rgba(125,211,199,.2);min-width:140px"><div style="font-size:8px;color:var(--muted);letter-spacing:1px">Wavelength</div><div class="mono" id="eq-w-disp" style="color:var(--seafoam);font-size:16px;font-weight:700">80 m</div></div>
+            <div style="padding:8px 16px;background:var(--bg);border-radius:6px;border:1px solid rgba(16,185,129,.2);min-width:140px"><div style="font-size:8px;color:var(--muted);letter-spacing:1px">Wave Speed</div><div class="mono" id="eq-spd-disp" style="color:var(--green);font-size:16px;font-weight:700">160 m/s</div></div>
+          </div>
+        </div>
+        <svg id="eq-svg" width="100%" viewBox="0 0 560 120">
+          <line x1="0" y1="60" x2="560" y2="60" stroke="var(--border2)" stroke-width="1"/>
+          <path id="eq-path" d="" fill="none" stroke="var(--seafoam2)" stroke-width="2.5" style="filter:drop-shadow(0 0 5px rgba(91,192,190,.4))"/>
+          <line id="eq-wl-line" x1="20" y1="108" x2="100" y2="108" stroke="var(--seafoam)" stroke-width="1.5"/>
+          <text id="eq-wl-ann" x="60" y="118" text-anchor="middle" fill="var(--seafoam)" font-size="10" font-family="monospace">λ = 80m</text>
+        </svg>
+        <div style="margin-top:12px;padding:12px;background:var(--bg);border-radius:6px;border:1px solid var(--border)">
+          <div class="mono" id="eq-formula" style="color:var(--text);font-size:12px">v = f × λ = 2 × 80 = 160 m/s  ·  T = 1/f = 0.500 s  ·  Higher frequency = shorter wavelength (constant speed)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────── PAGE: COMPARISON ── -->
+  <div id="page-comparison" class="page">
+    <div class="wrap">
+      <div class="section-head"><span style="font-size:22px">⚖️</span><h2>System Comparison</h2></div>
+      <div style="display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap">
+        <button class="tab-btn active" id="cmp-s-btn" onclick="selectSys('seismic')" style="flex:1;padding:10px">System A — Seismic Only</button>
+        <button class="tab-btn" id="cmp-b-btn" onclick="selectSys('buoy')" style="flex:1;padding:10px">System B — Buoy Only</button>
+        <button class="tab-btn" id="cmp-h-btn" onclick="selectSys('hybrid')" style="flex:1;padding:10px">★ Hybrid WaveGuard</button>
+      </div>
+      <div class="g2">
+        <div class="panel">
+          <div class="sec-title" id="cmp-title" style="color:var(--seafoam)">System A — Seismic Only</div>
+          <p id="cmp-desc" style="font-size:12px;color:var(--text);line-height:1.75;margin-bottom:16px">Seismic sensors alone detect earthquakes instantly but cannot confirm if a tsunami was generated. High speed but moderate reliability.</p>
+          <div id="cmp-metrics"></div>
+        </div>
+        <div class="panel">
+          <div class="sec-title">All Systems — Performance Radar</div>
+          <svg id="radar-svg" width="100%" viewBox="0 0 300 285">
+            <polygon id="rp2" fill="none" stroke="var(--border)" stroke-width=".8"/>
+            <polygon id="rp4" fill="none" stroke="var(--border)" stroke-width=".8"/>
+            <polygon id="rp6" fill="none" stroke="var(--border)" stroke-width=".8"/>
+            <polygon id="rp8" fill="none" stroke="var(--border)" stroke-width=".8"/>
+            <polygon id="rp10" fill="none" stroke="var(--border)" stroke-width=".8"/>
+            <text x="150" y="12" text-anchor="middle" fill="var(--muted2)" font-size="8" font-family="monospace">Detection Speed</text>
+            <text x="280" y="84" text-anchor="start" fill="var(--muted2)" font-size="8" font-family="monospace">Reliability</text>
+            <text x="235" y="232" text-anchor="middle" fill="var(--muted2)" font-size="8" font-family="monospace">Evacuation</text>
+            <text x="65" y="232" text-anchor="middle" fill="var(--muted2)" font-size="8" font-family="monospace">False Alarm↓</text>
+            <text x="12" y="84" text-anchor="start" fill="var(--muted2)" font-size="8" font-family="monospace">Low Cost↓</text>
+            <polygon id="radar-seismic" fill="rgba(125,211,199,.08)" stroke="var(--seafoam2)" stroke-width="1.5"/>
+            <polygon id="radar-buoy" fill="rgba(59,130,246,.08)" stroke="var(--blue)" stroke-width="1" stroke-opacity=".6"/>
+            <polygon id="radar-hybrid" fill="rgba(16,185,129,.2)" stroke="var(--green)" stroke-width="2.5"/>
+            <rect x="10" y="236" width="9" height="9" fill="var(--seafoam2)" fill-opacity=".7"/>
+            <text x="24" y="245" fill="var(--muted2)" font-size="9" font-family="monospace">Seismic Only</text>
+            <rect x="10" y="252" width="9" height="9" fill="var(--blue)" fill-opacity=".7"/>
+            <text x="24" y="261" fill="var(--muted2)" font-size="9" font-family="monospace">Buoy Only</text>
+            <rect x="10" y="268" width="9" height="9" fill="var(--green)" fill-opacity=".7"/>
+            <text x="24" y="277" fill="var(--green)" font-size="9" font-family="monospace" font-weight="bold">Hybrid WaveGuard ★</text>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ────────────────────────────────────────── PAGE: GRAPHS ── -->
+  <div id="page-graphs" class="page">
+    <div class="wrap">
+      <div class="section-head"><span style="font-size:22px">📊</span><h2>Live Data Graphs</h2></div>
+      <div class="g3" style="margin-bottom:16px">
+        <div class="panel">
+          <div class="sec-title">Tsunami Speed vs Ocean Depth</div>
+          <svg id="g-depth-svg" width="100%" viewBox="0 0 260 165" class="gg">
+            <line x1="36" y1="12" x2="36" y2="137" stroke="var(--border2)" stroke-width="1"/>
+            <line x1="36" y1="137" x2="252" y2="137" stroke="var(--border2)" stroke-width="1"/>
+            <text x="144" y="158" text-anchor="middle" fill="var(--muted2)" font-size="8" font-family="monospace">Depth (m)</text>
+            <text x="36" y="148" text-anchor="middle" fill="var(--muted2)" font-size="7">500</text>
+            <text x="144" y="148" text-anchor="middle" fill="var(--muted2)" font-size="7">4000</text>
+            <text x="252" y="148" text-anchor="middle" fill="var(--muted2)" font-size="7">8000</text>
+            <path id="g-depth-path" d="" fill="none" stroke="var(--seafoam2)" stroke-width="2" style="filter:drop-shadow(0 0 4px rgba(91,192,190,.4))"/>
+            <line id="g-depth-vline" x1="144" y1="12" x2="144" y2="137" stroke="var(--seafoam)" stroke-width="1" stroke-dasharray="3 2"/>
+            <circle id="g-depth-dot" cx="144" cy="70" r="4" fill="var(--seafoam)"/>
+          </svg>
+          <div class="mono" id="g-depth-lbl" style="font-size:10px;color:var(--seafoam);text-align:center;margin-top:4px">4000m → 712 km/h</div>
+        </div>
+        <div class="panel">
+          <div class="sec-title">Warning Time Effectiveness</div>
+          <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">
+            <div><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:9px;color:var(--muted)">Hybrid WaveGuard</span><span class="mono" style="font-size:10px;color:var(--green)">95%</span></div><div class="threat-bar" style="height:10px"><div class="threat-fill" style="width:95%;background:linear-gradient(90deg,rgba(16,185,129,.5),var(--green))"></div></div></div>
+            <div><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:9px;color:var(--muted)">Seismic Only</span><span class="mono" style="font-size:10px;color:var(--seafoam2)">72%</span></div><div class="threat-bar" style="height:10px"><div class="threat-fill" style="width:72%;background:linear-gradient(90deg,rgba(91,192,190,.5),var(--seafoam2))"></div></div></div>
+            <div><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:9px;color:var(--muted)">Buoy Only</span><span class="mono" style="font-size:10px;color:var(--blue)">58%</span></div><div class="threat-bar" style="height:10px"><div class="threat-fill" style="width:58%;background:linear-gradient(90deg,rgba(59,130,246,.5),var(--blue))"></div></div></div>
+            <div><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:9px;color:var(--muted)">No System</span><span class="mono" style="font-size:10px;color:var(--muted2)">5%</span></div><div class="threat-bar" style="height:10px"><div class="threat-fill" style="width:5%;background:var(--muted2)"></div></div></div>
+          </div>
+          <div style="margin-top:12px;font-size:9px;color:var(--muted);text-align:center">Effective evacuation rate at current parameters</div>
+        </div>
+        <div class="panel">
+          <div class="sec-title">Signal Travel Speed</div>
+          <svg id="g-speed-svg" width="100%" viewBox="0 0 260 165">
+            <g id="g-speed-bars"></g>
+            <text id="g-speed-note" x="10" y="158" fill="var(--muted2)" font-size="8" font-family="monospace">Seismic ~14× faster than tsunami</text>
+          </svg>
+        </div>
+      </div>
+      <!-- Sliders -->
+      <div class="panel">
+        <div class="sec-title">Adjust Parameters</div>
+        <div class="g3">
+          <div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:8px;font-weight:700;letter-spacing:1.5px;color:var(--muted2);text-transform:uppercase">Magnitude</span><span class="mono" style="font-size:12px;color:var(--seafoam)" id="gr-mag-v">7.2 M</span></div>
+            <input type="range" min="5" max="9" step="0.1" value="7.2" id="gr-mag" oninput="syncGraph('mag',this.value)"/>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:8px;font-weight:700;letter-spacing:1.5px;color:var(--muted2);text-transform:uppercase">Ocean Depth</span><span class="mono" style="font-size:12px;color:var(--seafoam2)" id="gr-depth-v">4000 m</span></div>
+            <input type="range" min="500" max="12000" step="100" value="4000" id="gr-depth" oninput="syncGraph('depth',this.value)"/>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:8px;font-weight:700;letter-spacing:1.5px;color:var(--muted2);text-transform:uppercase">Seismic Speed</span><span class="mono" style="font-size:12px;color:var(--amber)" id="gr-sspd-v">14000 km/h</span></div>
+            <input type="range" min="5000" max="25000" step="500" value="14000" id="gr-sspd" oninput="syncGraph('sspd',this.value)"/>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ──────────────────────────────────────── PAGE: SCIENTISTS ── -->
+  <div id="page-scientists" class="page">
+    <div class="wrap">
+      <div class="section-head"><span style="font-size:22px">🔬</span><h2>Scientific Command</h2></div>
+
+      <!-- Authority panel -->
+      <div style="padding:18px 24px;margin-bottom:22px;background:linear-gradient(135deg,rgba(49,92,103,.18),rgba(59,130,246,.1));border:1px solid var(--border);border-radius:10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+        <div>
+          <div style="font-size:8px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Operation WaveGuard</div>
+          <div style="font-size:18px;font-weight:800;color:var(--seafoam);letter-spacing:2px;text-transform:uppercase">Wavara Defense Scientific Command</div>
+          <div style="font-size:10px;color:var(--muted2);margin-top:3px">Pacific Tsunami Early Warning Network — Level 5 Scientific Authority</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <div class="clearance-badge lvl-5">Level 5 Clearance</div>
+          <div class="clearance-badge lvl-sci">Scientific Command</div>
+          <div style="display:flex;align-items:center;gap:4px"><div style="width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 5px var(--green)"></div><span style="font-size:8px;color:var(--muted);letter-spacing:1px;text-transform:uppercase">All Systems Active</span></div>
+        </div>
+      </div>
+
+      <!-- Scientist cards -->
+      <div class="g3" style="margin-bottom:22px">
+        <!-- Omar -->
+        <div class="sci-card" style="animation:fadeInUp .7s ease">
+          <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--amber),transparent)"></div>
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+            <div class="sci-avatar" style="border-color:rgba(245,158,11,.4);background:linear-gradient(135deg,rgba(245,158,11,.12),var(--panel))">🧑‍🔬</div>
+            <div>
+              <div style="font-size:16px;font-weight:800;color:var(--text);letter-spacing:1px">Omar</div>
+              <div style="font-size:9px;color:var(--amber);letter-spacing:2px;text-transform:uppercase;margin-top:2px">Lead Seismic Analyst</div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:14px">
+            <div style="display:flex;justify-content:space-between;padding:6px 10px;background:var(--bg);border-radius:5px;border:1px solid var(--border)">
+              <span style="font-size:9px;color:var(--muted)">Specialisation</span>
+              <span style="font-size:9px;color:var(--amber);font-weight:600">P-Wave Analysis</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:6px 10px;background:var(--bg);border-radius:5px;border:1px solid var(--border)">
+              <span style="font-size:9px;color:var(--muted)">Department</span>
+              <span style="font-size:9px;color:var(--text)">Seismic Intelligence</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:6px 10px;background:var(--bg);border-radius:5px;border:1px solid var(--border)">
+              <span style="font-size:9px;color:var(--muted)">System Role</span>
+              <span style="font-size:9px;color:var(--text)">Primary Detection</span>
+            </div>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <div class="clearance-badge lvl-5" style="font-size:7px">Level 5 Clearance</div>
+            <div style="display:flex;align-items:center;gap:3px;padding:3px 8px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);border-radius:3px"><div style="width:4px;height:4px;border-radius:50%;background:var(--green);box-shadow:0 0 4px var(--green)"></div><span style="font-size:7px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase">On Duty</span></div>
+          </div>
+          <div style="margin-top:12px;font-size:10px;color:var(--muted2);line-height:1.7;border-top:1px solid var(--border);padding-top:10px">Monitors global seismic networks for signature P-wave patterns indicating undersea earthquakes capable of generating tsunamis. Coordinates rapid threat assessment with Wavara Defense Command.</div>
+        </div>
+
+        <!-- Karma -->
+        <div class="sci-card" style="animation:fadeInUp .85s ease">
+          <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--blue),transparent)"></div>
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+            <div class="sci-avatar" style="border-color:rgba(59,130,246,.4);background:linear-gradient(135deg,rgba(59,130,246,.12),var(--panel))">👩‍🔬</div>
+            <div>
+              <div style="font-size:16px;font-weight:800;color:var(--text);letter-spacing:1px">Karma</div>
+              <div style="font-size:9px;color:var(--blue);letter-spacing:2px;text-transform:uppercase;margin-top:2px">Ocean Monitoring Specialist</div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:14px">
+            <div style="display:flex;justify-content:space-between;padding:6px 10px;background:var(--bg);border-radius:5px;border:1px solid var(--border)">
+              <span style="font-size:9px;color:var(--muted)">Specialisation</span>
+              <span style="font-size:9px;color:var(--blue);font-weight:600">DART Buoy Network</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:6px 10px;background:var(--bg);border-radius:5px;border:1px solid var(--border)">
+              <span style="font-size:9px;color:var(--muted)">Department</span>
+              <span style="font-size:9px;color:var(--text)">Ocean Intelligence</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:6px 10px;background:var(--bg);border-radius:5px;border:1px solid var(--border)">
+              <span style="font-size:9px;color:var(--muted)">System Role</span>
+              <span style="font-size:9px;color:var(--text)">Buoy Confirmation</span>
+            </div>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <div class="clearance-badge lvl-5" style="font-size:7px">Level 5 Clearance</div>
+            <div style="display:flex;align-items:center;gap:3px;padding:3px 8px;background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.25);border-radius:3px"><div style="width:4px;height:4px;border-radius:50%;background:var(--green);box-shadow:0 0 4px var(--green)"></div><span style="font-size:7px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase">On Duty</span></div>
+          </div>
+          <div style="margin-top:12px;font-size:10px;color:var(--muted2);line-height:1.7;border-top:1px solid var(--border);padding-top:10px">Manages the DART deep-ocean pressure buoy network across the Pacific Basin. Interprets ocean pressure anomalies to confirm tsunami wave presence with 98.7% accuracy before full evacuation orders are issued.</div>
+        </div>
+
+        <!-- Mariam -->
+        <div class="sci-card" style="animation:fadeInUp 1s ease">
+          <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--green),transparent)"></div>
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+            <div class="sci-avatar" style="border-color:rgba(16,185,129,.4);background:linear-gradient(135deg,rgba(16,185,129,.12),var(--panel))">👩‍💻</div>
+            <div>
+              <div style="font-size:16px;font-weight:800;color:var(--text);letter-spacing:1px">Mariam</div>
+              <div style="font-size:9px;color:var(--green);letter-spacing:2px;text-transform:uppercase;margin-top:2px">Hybrid Systems Coordinator</div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:14px">
+            <div style="display:flex;justify-content:space-between;padding:6px 10px;background:var(--bg);border-radius:5px;border:1px solid var(--border)">
+              <span style="font-size:9px;color:var(--muted)">Specialisation</span>
+              <span style="font-size:9px;color:var(--green);font-weight:600">AI Fusion Systems</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:6px 10px;background:var(--bg);border-radius:5px;border:1px solid var(--border)">
+              <span style="font-size:9px;color:var(--muted)">Department</span>
+              <span style="font-size:9px;color:var(--text)">Systems Command</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:6px 10px;background:var(--bg);border-radius:5px;border:1px solid var(--border)">
+              <span style="font-size:9px;color:var(--muted)">System Role</span>
+              <span style="font-size:9px;color:var(--text)">Decision & Broadcast</span>
+            </div>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <div class="clearance-badge lvl-sci" style="font-size:7px">Scientific Command</div>
+            <div style="display:flex;align-items:center;gap:3px;padding:3px 8px;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.25);border-radius:3px"><div style="width:4px;height:4px;border-radius:50%;background:var(--green);box-shadow:0 0 4px var(--green)"></div><span style="font-size:7px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase">On Duty</span></div>
+          </div>
+          <div style="margin-top:12px;font-size:10px;color:var(--muted2);line-height:1.7;border-top:1px solid var(--border);padding-top:10px">Coordinates the hybrid AI decision system — integrating seismic and buoy data streams to issue authorised warnings. Manages the false-alarm reduction algorithm that increased public warning compliance by 340%.</div>
+        </div>
+      </div>
+
+      <!-- Authority levels panel -->
+      <div class="panel">
+        <div class="sec-title">WaveGuard Authority & Clearance System</div>
+        <div class="g4">
+          <div style="padding:14px;background:var(--bg);border-radius:8px;border:1px solid rgba(16,185,129,.2);text-align:center">
+            <div class="clearance-badge lvl-1" style="font-size:8px;margin:0 auto 8px">Level 1</div>
+            <div style="font-size:11px;font-weight:700;color:var(--green);margin-bottom:4px">Monitoring</div>
+            <div style="font-size:9px;color:var(--muted);line-height:1.6">Read-only access to sensor data feeds. General public monitoring level. Shared displays only.</div>
+          </div>
+          <div style="padding:14px;background:var(--bg);border-radius:8px;border:1px solid rgba(59,130,246,.2);text-align:center">
+            <div class="clearance-badge lvl-3" style="font-size:8px;margin:0 auto 8px">Level 3</div>
+            <div style="font-size:11px;font-weight:700;color:var(--blue);margin-bottom:4px">Response</div>
+            <div style="font-size:9px;color:var(--muted);line-height:1.6">Operational access. Can trigger evacuation protocols and modify sensor thresholds under supervision.</div>
+          </div>
+          <div style="padding:14px;background:var(--bg);border-radius:8px;border:1px solid rgba(245,158,11,.2);text-align:center">
+            <div class="clearance-badge lvl-5" style="font-size:8px;margin:0 auto 8px">Level 5</div>
+            <div style="font-size:11px;font-weight:700;color:var(--amber);margin-bottom:4px">Full Clearance</div>
+            <div style="font-size:9px;color:var(--muted);line-height:1.6">Full system access. Issue national warnings, adjust hybrid algorithm parameters. Scientists and directors only.</div>
+          </div>
+          <div style="padding:14px;background:var(--bg);border-radius:8px;border:1px solid rgba(125,211,199,.2);text-align:center">
+            <div class="clearance-badge lvl-sci" style="font-size:8px;margin:0 auto 8px">SCI CMD</div>
+            <div style="font-size:11px;font-weight:700;color:var(--seafoam);margin-bottom:4px">Scientific Command</div>
+            <div style="font-size:9px;color:var(--muted);line-height:1.6">Classified intelligence access. OMK system, internal briefings, algorithm source code. Omar, Karma, Mariam only.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ──────────────────────────────────────── PAGE: SAFETY ── -->
+  <div id="page-safety" class="page">
+    <div class="wrap">
+      <div class="section-head"><span style="font-size:22px">🏃</span><h2>Public Safety Information</h2></div>
+      <div style="padding:20px 24px;margin-bottom:20px;background:linear-gradient(135deg,rgba(220,38,38,.1),rgba(245,158,11,.07));border:1px solid rgba(220,38,38,.3);border-radius:10px;display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+        <div style="font-size:44px;flex-shrink:0">⚠️</div>
+        <div>
+          <div style="color:var(--red2);font-size:14px;font-weight:800;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px">Public Tsunami Safety Guide</div>
+          <div style="font-size:13px;color:var(--text);max-width:640px;line-height:1.7">If WaveGuard issues a tsunami warning, you have <strong style="color:var(--amber)">6.5 hours of advance notice</strong>. Every second counts. Follow these steps immediately.</div>
+        </div>
+      </div>
+      <div class="g3" style="margin-bottom:20px">
+        <div class="panel" style="text-align:center"><div style="font-size:34px;margin-bottom:8px">📻</div><div style="font-size:8px;font-weight:700;letter-spacing:2px;color:var(--seafoam);text-transform:uppercase;margin-bottom:4px">Step 1</div><div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:8px">Hear the Alert</div><div style="font-size:10px;color:var(--muted);line-height:1.65">Listen for official warnings via radio, TV, sirens, or mobile alerts. Do not wait to see the wave — tsunamis are invisible from the shore.</div></div>
+        <div class="panel" style="text-align:center"><div style="font-size:34px;margin-bottom:8px">🏃</div><div style="font-size:8px;font-weight:700;letter-spacing:2px;color:var(--seafoam);text-transform:uppercase;margin-bottom:4px">Step 2</div><div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:8px">Move Immediately</div><div style="font-size:10px;color:var(--muted);line-height:1.65">Go to high ground or inland. Move at least 1 mile from the coast or reach 30 metres above sea level. You have time — WaveGuard gave you 6.5 hours.</div></div>
+        <div class="panel" style="text-align:center"><div style="font-size:34px;margin-bottom:8px">🚗</div><div style="font-size:8px;font-weight:700;letter-spacing:2px;color:var(--seafoam);text-transform:uppercase;margin-bottom:4px">Step 3</div><div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:8px">Follow Evacuation Routes</div><div style="font-size:10px;color:var(--muted);line-height:1.65">Use designated evacuation routes. Avoid bridges and low-lying roads near water.</div></div>
+        <div class="panel" style="text-align:center"><div style="font-size:34px;margin-bottom:8px">📱</div><div style="font-size:8px;font-weight:700;letter-spacing:2px;color:var(--seafoam);text-transform:uppercase;margin-bottom:4px">Step 4</div><div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:8px">Stay Informed</div><div style="font-size:10px;color:var(--muted);line-height:1.65">Monitor official channels. A tsunami can have multiple waves — the first may not be the largest. Stay tuned to WaveGuard alerts.</div></div>
+        <div class="panel" style="text-align:center"><div style="font-size:34px;margin-bottom:8px">⏳</div><div style="font-size:8px;font-weight:700;letter-spacing:2px;color:var(--seafoam);text-transform:uppercase;margin-bottom:4px">Step 5</div><div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:8px">Wait for All-Clear</div><div style="font-size:10px;color:var(--muted);line-height:1.65">Do NOT return until authorities give the official all-clear. The threat can last several hours after the first wave.</div></div>
+        <div class="panel" style="text-align:center"><div style="font-size:34px;margin-bottom:8px">🤝</div><div style="font-size:8px;font-weight:700;letter-spacing:2px;color:var(--seafoam);text-transform:uppercase;margin-bottom:4px">Step 6</div><div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:8px">Help Others</div><div style="font-size:10px;color:var(--muted);line-height:1.65">Help neighbours, especially elderly or disabled people. You have 6.5 hours — use it to help your community evacuate safely.</div></div>
+      </div>
+      <!-- Example alert -->
+      <div class="panel" style="border-color:rgba(245,158,11,.35);background:rgba(245,158,11,.04)">
+        <div class="sec-title sec-title-amber">WaveGuard Official Emergency Alert</div>
+        <div style="background:var(--bg);border-radius:6px;padding:16px;border:1px solid rgba(245,158,11,.2);font-family:'Courier New',monospace">
+          <div style="color:var(--amber);font-size:13px;margin-bottom:8px;font-weight:700">🚨 OFFICIAL TSUNAMI WARNING — OPERATION WAVEGUARD — WAVARA DEFENSE NETWORK</div>
+          <div style="color:var(--text);font-size:11px;line-height:2">
+            ISSUED: <span id="safety-date"></span><br/>
+            AFFECTED AREA: Wavara Coastal Zone (all areas below 30m elevation)<br/>
+            THREAT LEVEL: HIGH — Estimated Wave Height: 3–15 metres<br/>
+            ESTIMATED ARRIVAL: 7.0 HOURS (WaveGuard Hybrid Advantage: 6.5 hrs early warning)<br/>
+            DISTANCE FROM EPICENTRE: 7,000 km &nbsp;|&nbsp; TSUNAMI SPEED: 1,000 km/h<br/>
+            <span style="color:var(--red2);font-weight:700">EVACUATE IMMEDIATELY. MOVE TO HIGH GROUND. DO NOT RETURN WITHOUT OFFICIAL ALL-CLEAR.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer style="border-top:1px solid var(--border);padding:16px;text-align:center;background:var(--panel)">
+    <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:4px">
+      <svg width="14" height="18" viewBox="0 0 48 64" fill="none" style="color:rgba(125,211,199,.4)"><rect x="21" y="30" width="6" height="34" rx="3" fill="currentColor"/><rect x="17" y="28" width="14" height="4" rx="2" fill="currentColor"/><path d="M24 4 L24 30" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><path d="M24 4 C21 4 18 7 18 11 C18 16 21 17 24 17 C27 17 30 16 30 11 C30 7 27 4 24 4 Z" fill="currentColor"/><path d="M8 14 L8 28 Q8 34 16 34 L21 34" stroke="currentColor" stroke-width="3" stroke-linecap="round" fill="none"/><path d="M8 14 C5 14 2 17 2 21 C2 26 5 27 8 27 C11 27 14 26 14 21 C14 17 11 14 8 14 Z" fill="currentColor"/><path d="M40 14 L40 28 Q40 34 32 34 L27 34" stroke="currentColor" stroke-width="3" stroke-linecap="round" fill="none"/><path d="M40 14 C37 14 34 17 34 21 C34 26 37 27 40 27 C43 27 46 26 46 21 C46 17 43 14 40 14 Z" fill="currentColor"/></svg>
+      <div style="font-size:8px;font-weight:700;letter-spacing:3px;color:rgba(158,179,200,.4);text-transform:uppercase">Operation WaveGuard · Wavara Defense Network · Educational Project · Omar · Karma · Mariam</div>
+    </div>
+    <div style="font-size:9px;color:rgba(36,52,71,.9)">All values are simulated for educational purposes. Based on real tsunami physics, NOAA DART II technology, and Pacific Warning Centre methodology.</div>
+  </footer>
+
+</div><!-- end #app -->
+
+<script>
+/* ════════════════════════════════════════════════
+   PASSWORDS
+════════════════════════════════════════════════ */
+const LOCK_PW = 'WAVARA';
+const OMK_PW  = 'HYBRID';
+
+function checkLock() {
+  var v = (document.getElementById('lock-input').value||'').trim().toUpperCase();
+  if (v === LOCK_PW) {
+    var p = document.getElementById('lock-panel');
+    p.style.animation = 'lockReveal .5s ease forwards';
+    setTimeout(function() {
+      document.getElementById('lock-screen').style.display = 'none';
+      var ls = document.getElementById('loading-screen');
+      ls.style.display = 'flex';
+      startLoad();
+    }, 480);
+  } else {
+    var e = document.getElementById('lock-error');
+    e.textContent = 'Invalid access code — authentication failed';
+    e.style.opacity = '1';
+    var p = document.getElementById('lock-panel');
+    p.style.animation = 'shake .5s ease';
+    setTimeout(function(){ p.style.animation = ''; }, 520);
+    setTimeout(function(){ e.style.opacity = '0'; }, 3500);
+    document.getElementById('lock-input').value = '';
+    document.getElementById('lock-input').focus();
+  }
+}
+document.getElementById('lock-input').addEventListener('keydown', function(e){ if(e.key==='Enter') checkLock(); });
+
+function checkOmk() {
+  var v = (document.getElementById('omk-input').value||'').trim().toUpperCase();
+  if (v === OMK_PW) {
+    document.getElementById('omk-lock-screen').style.display = 'none';
+    var o = document.getElementById('omk-overlay');
+    o.style.display = 'block';
+  } else {
+    var e = document.getElementById('omk-error');
+    e.textContent = 'Incorrect classified code';
+    e.style.opacity = '1';
+    var p = document.getElementById('omk-lock-panel');
+    p.style.animation = 'shake .5s ease';
+    setTimeout(function(){ p.style.animation = ''; }, 520);
+    setTimeout(function(){ e.style.opacity = '0'; }, 3000);
+    document.getElementById('omk-input').value = '';
+  }
+}
+document.getElementById('omk-input').addEventListener('keydown', function(e){ if(e.key==='Enter') checkOmk(); });
+function openOmkLock() {
+  var s = document.getElementById('omk-lock-screen');
+  s.style.display = 'flex';
+  s.style.alignItems = 'center';
+  s.style.justifyContent = 'center';
+  document.getElementById('omk-input').value = '';
+}
+function closeOmkLock() { document.getElementById('omk-lock-screen').style.display = 'none'; }
+function closeOmk() { document.getElementById('omk-overlay').style.display = 'none'; }
+
+function selectOmkTab(i) {
+  for (var j = 0; j < 5; j++) {
+    var t = document.getElementById('omk-tab-' + j);
+    var c = document.getElementById('omk-c-' + j);
+    if (!t || !c) continue;
+    if (j === i) {
+      t.classList.add('active');
+      t.style.color = 'var(--red2)';
+      t.style.borderColor = 'rgba(239,68,68,.4)';
+      c.classList.add('active');
+    } else {
+      t.classList.remove('active');
+      t.style.color = 'var(--muted)';
+      t.style.borderColor = 'var(--border)';
+      c.classList.remove('active');
+    }
+  }
+}
+
+/* ════════════════════════════════════════════════
+   LOADING
+════════════════════════════════════════════════ */
+var loadPhases = ['INITIALISING SYSTEM...','LOADING SENSOR NETWORK...','CALIBRATING DART BUOYS...','CONNECTING SEISMIC GRID...','LINKING SATELLITE UPLINK...','SYSTEM READY — ACCESS GRANTED'];
+function startLoad() {
+  var prog = 0;
+  var bar = document.getElementById('load-bar');
+  var ph = document.getElementById('load-phase');
+  var pct = document.getElementById('load-pct');
+  var iv = setInterval(function() {
+    prog += Math.random() * 3.5 + 0.8;
+    if (prog >= 100) {
+      prog = 100;
+      clearInterval(iv);
+      bar.style.width = '100%';
+      ph.textContent = loadPhases[5];
+      pct.textContent = '100%';
+      setTimeout(function() {
+        document.getElementById('loading-screen').style.display = 'none';
+        document.getElementById('app').style.display = 'block';
+        initApp();
+      }, 500);
+    } else {
+      bar.style.width = prog + '%';
+      ph.textContent = loadPhases[Math.min(Math.floor((prog/100)*loadPhases.length), loadPhases.length-2)];
+      pct.textContent = Math.round(prog) + '%';
+    }
+  }, 55);
+}
+
+/* ════════════════════════════════════════════════
+   STARS
+════════════════════════════════════════════════ */
+function genStars(id, n) {
+  var c = document.getElementById(id);
+  if (!c) return;
+  for (var i = 0; i < n; i++) {
+    var d = document.createElement('div');
+    var sz = Math.random()*1.8+0.4;
+    d.style.cssText = 'position:absolute;left:'+Math.random()*100+'%;top:'+Math.random()*70+'%;width:'+sz+'px;height:'+sz+'px;border-radius:50%;background:white;opacity:'+(Math.random()*.5+.15)+';animation:starTwinkle '+(Math.random()*3+2)+'s step-end infinite;animation-delay:'+(Math.random()*4)+'s';
+    c.appendChild(d);
+  }
+}
+genStars('lock-stars', 55);
+
+/* ════════════════════════════════════════════════
+   STATE
+════════════════════════════════════════════════ */
+var P = {
+  magnitude: 7.2,
+  distance: 7000,
+  seismicSpeed: 14000,
+  tsunamiSpeed: 1000,
+  oceanDepth: 4000,
+  buoySensitivity: 80
+};
+var simState = 'idle';
+var simRAF = null;
+var simStart = null;
+var sDetected = false;
+var bDetected = false;
+var wIssued = false;
+var seisPos = 0;
+var tsuPos = 0;
+var currentView = 'surface';
+var waveRAF = null, eqRAF = null;
+
+/* ════════════════════════════════════════════════
+   NAVIGATION
+════════════════════════════════════════════════ */
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+  var pg = document.getElementById('page-' + id);
+  if (pg) pg.classList.add('active');
+  document.querySelectorAll('.nav-link').forEach(function(b) { b.classList.remove('active'); });
+  var nb = document.querySelector('.nav-link[onclick*="\''+id+'\'"]');
+  if (nb) nb.classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+  if (id === 'wave') startWaveAnim();
+  else stopWaveAnim();
+  if (id === 'equation') startEqAnim();
+  else stopEqAnim();
+  if (id === 'comparison') { initRadar(); selectSys('seismic'); }
+  if (id === 'graphs') updateGraphs();
+  if (id === 'safety') document.getElementById('safety-date').textContent = new Date().toUTCString();
+}
+
+/* ════════════════════════════════════════════════
+   CALCULATIONS
+════════════════════════════════════════════════ */
+function seisTime() { return (P.distance / P.seismicSpeed) * 60; } // minutes
+function tsuTime() { return P.distance / P.tsunamiSpeed; }          // hours
+function hybridAdv() { return Math.max(0, tsuTime() - seisTime()/60 - 0.05); } // hours
+function tsuSpeedFromDepth(d) { return Math.round(Math.sqrt(9.81*d)*3.6); }
+function reliab() { return Math.min(99.9, 70 + P.buoySensitivity*0.25 + (P.magnitude>6?8:0)); }
+function threatPct() { return Math.min(100, Math.max(0, ((P.magnitude-5)/4)*100)); }
+
+function updateParams() {
+  P.magnitude    = parseFloat(document.getElementById('sl-mag').value);
+  P.distance     = parseFloat(document.getElementById('sl-dist').value);
+  P.seismicSpeed = parseFloat(document.getElementById('sl-sspd').value);
+  P.tsunamiSpeed = parseFloat(document.getElementById('sl-tspd').value);
+  P.oceanDepth   = parseFloat(document.getElementById('sl-depth').value);
+  P.buoySensitivity = parseFloat(document.getElementById('sl-bsens').value);
+
+  setText('v-mag', P.magnitude.toFixed(1)+' M');
+  setText('v-dist', P.distance+' km');
+  setText('v-sspd', P.seismicSpeed+' km/h');
+  setText('v-tspd', P.tsunamiSpeed+' km/h');
+  setText('v-depth', P.oceanDepth+' m');
+  setText('v-bsens', P.buoySensitivity+'%');
+
+  var seisMin = seisTime().toFixed(1);
+  setText('f-eq-val', 't = '+P.distance+'/'+P.seismicSpeed+' = '+seisMin+' min');
+  var tCalc = tsuSpeedFromDepth(P.oceanDepth);
+  setText('f-ts-val', 'v = √(9.81×'+P.oceanDepth+') ≈ '+Math.round(Math.sqrt(9.81*P.oceanDepth))+' m/s ≈ '+tCalc+' km/h');
+  setText('timing-lines', 'T+'+seisMin+'min: Seismic alert\nT+'+tsuTime().toFixed(1)+'hrs: Tsunami arrives');
+
+  updateLiveData();
+  updateGraphs();
+  syncGrSliders();
+}
+
+function updateLiveData() {
+  var sm = seisTime();
+  var ta = tsuTime();
+  var adv = hybridAdv();
+  var rel = reliab();
+  var thr = threatPct();
+  setText('dr-seis', sm.toFixed(1));
+  setText('dr-buoy', (sm*3).toFixed(0));
+  setText('dr-arrival', ta.toFixed(2));
+  setText('dr-adv', adv.toFixed(2));
+  setText('dr-rel', rel.toFixed(1));
+  setText('adv-display', adv.toFixed(1)+' hrs');
+  var color = thr<30?'var(--green)':thr<65?'var(--amber)':'var(--red2)';
+  var lbl = thr<20?'NOMINAL':thr<40?'ELEVATED':thr<65?'GUARDED':thr<85?'HIGH':'CRITICAL';
+  var tf = document.getElementById('threat-fill');
+  if (tf) { tf.style.width = thr+'%'; tf.style.background = 'linear-gradient(90deg,var(--accent),'+color+')'; }
+  var tl = document.getElementById('threat-lbl');
+  if (tl) { tl.textContent = lbl; tl.style.color = color; }
+}
+
+function syncGrSliders() {
+  var d = {'gr-mag': P.magnitude.toFixed(1)+' M', 'gr-depth': P.oceanDepth+' m', 'gr-sspd': P.seismicSpeed+' km/h'};
+  if (document.getElementById('gr-mag')) {
+    document.getElementById('gr-mag').value = P.magnitude;
+    document.getElementById('gr-depth').value = P.oceanDepth;
+    document.getElementById('gr-sspd').value = P.seismicSpeed;
+    setText('gr-mag-v', P.magnitude.toFixed(1)+' M');
+    setText('gr-depth-v', P.oceanDepth+' m');
+    setText('gr-sspd-v', P.seismicSpeed+' km/h');
+  }
+}
+
+function syncGraph(field, val) {
+  if (field==='mag') { P.magnitude=parseFloat(val); document.getElementById('sl-mag').value=val; setText('v-mag',parseFloat(val).toFixed(1)+' M'); setText('gr-mag-v',parseFloat(val).toFixed(1)+' M'); }
+  if (field==='depth') { P.oceanDepth=parseFloat(val); document.getElementById('sl-depth').value=val; setText('v-depth',val+' m'); setText('gr-depth-v',val+' m'); var tc=tsuSpeedFromDepth(P.oceanDepth); setText('f-ts-val','v = √(9.81×'+P.oceanDepth+') ≈ '+Math.round(Math.sqrt(9.81*P.oceanDepth))+' m/s ≈ '+tc+' km/h'); }
+  if (field==='sspd') { P.seismicSpeed=parseFloat(val); document.getElementById('sl-sspd').value=val; setText('v-sspd',val+' km/h'); setText('gr-sspd-v',val+' km/h'); }
+  updateLiveData(); updateGraphs();
+}
+
+function setText(id, text) { var e = document.getElementById(id); if (e) e.textContent = text; }
+
+/* ════════════════════════════════════════════════
+   SIMULATION
+════════════════════════════════════════════════ */
+function setView(v) {
+  currentView = v;
+  ['surface','underground','satellite','cross','dashboard'].forEach(function(id) {
+    var el = document.getElementById('view-' + id);
+    if (el) el.style.display = (id === v) ? 'block' : 'none';
+  });
+  document.querySelectorAll('[id^="vbtn-"]').forEach(function(b) { b.classList.remove('active'); });
+  var b = document.getElementById('vbtn-' + v);
+  if (b) b.classList.add('active');
+}
+
+function startSim() {
+  if (simState === 'running') return;
+  resetSim();
+  simState = 'running';
+  simStart = Date.now();
+  sDetected = bDetected = wIssued = false;
+  seisPos = tsuPos = 0;
+  document.getElementById('sim-btn').disabled = true;
+  document.getElementById('sim-btn').textContent = '● RUNNING...';
+  ['sv-pbar','ug-pbar','cs-pbar'].forEach(function(id){ var e=document.getElementById(id); if(e) e.style.display='block'; });
+  document.getElementById('sv-complete').style.display = 'none';
+  document.getElementById('emerg-panel').style.display = 'none';
+  document.getElementById('sv-island-alert').style.display = 'none';
+  document.getElementById('sv-arrows').style.display = 'none';
+  document.getElementById('nav-sim-dot').style.background = 'var(--amber)';
+  document.getElementById('nav-sim-dot').style.boxShadow = '0 0 6px var(--amber)';
+  addEqPulses();
+  logEvent('T+0:00 — M'+P.magnitude+' earthquake detected at epicentre.', 'var(--red2)');
+  var DURATION = 9000;
+  function animate() {
+    var elapsed = Date.now() - simStart;
+    var t = Math.min(elapsed / DURATION, 1);
+    var seisT = Math.min(elapsed / (DURATION * 0.2), 1);
+    var tsuT = Math.max(0, Math.min((elapsed - 700) / (DURATION * 0.88), 1));
+    seisPos = seisT * 80;
+    tsuPos = tsuT * 60;
+    // Update seismic position
+    updateDot('sv-swave', seisPos, 'surf');
+    updateDot('ug-swave', seisPos, 'ug');
+    updateDot('cs-swave', seisPos, 'cs');
+    // Update tsunami position
+    updateTsuPos(tsuPos);
+    // Seismic rings
+    updateSeisRings(seisPos);
+    // Satellite tsunami ring
+    var str = document.getElementById('sat-tsunami-ring');
+    if (str) str.setAttribute('r', String(tsuPos * 3.8));
+    // Progress fills
+    var pfPct = t * 100;
+    ['sv-pfill','ug-pfill','cs-pfill'].forEach(function(id){ var e=document.getElementById(id); if(e) e.style.width=pfPct+'%'; });
+    // Timeline fill
+    var tlf = document.getElementById('tl-tsunami-fill');
+    if (tlf) tlf.style.width = (tsuT * 100) + '%';
+    if (t > 0.18 && !sDetected) { sDetected=true; onSeisDetected(); }
+    if (t > 0.48 && !bDetected) { bDetected=true; onBuoyDetected(); }
+    if (t > 0.54 && !wIssued) { wIssued=true; onWarning(); }
+    updateLiveData();
+    if (t < 1) simRAF = requestAnimationFrame(animate);
+    else onSimComplete();
+  }
+  simRAF = requestAnimationFrame(animate);
+}
+
+function updateDot(id, pos, type) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  el.style.left = (16 + pos * 0.6) + '%';
+  el.style.display = pos > 0 ? 'block' : 'none';
+}
+
+function updateTsuPos(pos) {
+  var pct = 16 + pos * 0.55;
+  ['sv-tsunami','cs-tsunami'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) { el.style.left = pct + '%'; el.style.display = pos > 0 ? 'block' : 'none'; }
+  });
+  if (pos > 0) document.getElementById('sv-arrows').style.display = 'block';
+}
+
+function updateSeisRings(pos) {
+  var r = pos * 1.5;
+  ['ugr1','ugr2','ugr3'].forEach(function(id, i){
+    var el = document.getElementById(id);
+    if (el) el.setAttribute('r', String(Math.max(0, r - i*12)));
+  });
+}
+
+function addEqPulses() {
+  ['surf-eq-pulses','ug-pulses','cross-pulses'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.innerHTML = '<svg width="50" height="50" viewBox="0 0 50 50" style="position:absolute;top:-25px;left:-25px"><circle cx="25" cy="25" r="0" fill="none" stroke="var(--red2)" stroke-width="2" style="animation:pulseRing 1.8s ease-out infinite"/><circle cx="25" cy="25" r="0" fill="none" stroke="var(--red2)" stroke-width="1.5" style="animation:pulseRing 1.8s ease-out infinite;animation-delay:.55s"/></svg>';
+  });
+}
+
+function activatePanel(id, color, label, lblId, stId) {
+  var panel = document.getElementById(id);
+  if (panel) { panel.style.borderColor=color; panel.style.background=color.replace(')',',0.08)').replace('var(--','rgba(').replace(')',''); panel.style.boxShadow='0 0 14px '+color.replace(')',',0.18)').replace('var(--','rgba(').replace(')',''); }
+  var lbl = document.getElementById(lblId);
+  if (lbl) lbl.style.color = color;
+  var st = document.getElementById(stId);
+  if (st) { st.textContent='● ACTIVE'; st.style.color=color; st.style.animation='blinkAlert 1s step-end infinite'; }
+}
+
+function activateSensor(cls, color) {
+  document.querySelectorAll('.'+cls).forEach(function(el){
+    el.style.background=color.replace(')',',0.15)').replace('var(--','rgba(').replace(')','');
+    el.style.borderColor=color;
+    el.style.color=color;
+    el.style.boxShadow='0 0 10px '+color.replace(')',',0.4)').replace('var(--','rgba(').replace(')','');
+  });
+}
+
+function onSeisDetected() {
+  activateSensor('sv-sensor','var(--seafoam)');
+  activateSensor('ug-sensor','var(--amber)');
+  activateSensor('cs-sensor','var(--amber)');
+  document.querySelectorAll('.s-status[data-id="s1"],.s-status[data-id="s2"]').forEach(function(el){ el.textContent='● ACTIVE'; el.style.color='var(--amber)'; });
+  activatePanel('db-s','var(--amber)','SEISMIC','db-s-lbl','db-s-st');
+  activatePanel('db-h','var(--seafoam)','HYBRID','db-h-lbl','db-h-st');
+  logEvent('T+'+seisTime().toFixed(1)+'min — Seismic sensors ACTIVATED! P-wave confirmed.', 'var(--amber)');
+}
+
+function onBuoyDetected() {
+  document.querySelectorAll('.buoy-top,.cs-buoy-top').forEach(function(el){ try{el.setAttribute('stroke','var(--blue)');el.setAttribute('fill','rgba(59,130,246,.3)');}catch(e){} });
+  document.querySelectorAll('.buoy-lbl').forEach(function(el){ el.style.color='var(--blue)'; });
+  ['sat-b1','sat-b2'].forEach(function(id){ var e=document.getElementById(id); if(e){e.setAttribute('fill','rgba(59,130,246,.8)');e.setAttribute('stroke','white');} });
+  document.querySelectorAll('.s-status[data-id="b1"],.s-status[data-id="b2"]').forEach(function(el){ el.textContent='● ACTIVE'; el.style.color='var(--blue)'; });
+  activatePanel('db-b','var(--blue)','BUOY','db-b-lbl','db-b-st');
+  logEvent('T+'+(seisTime()*3).toFixed(0)+'min — Buoy network confirms tsunami wave!', 'var(--blue)');
+}
+
+function onWarning() {
+  document.getElementById('sv-island-alert').style.display = 'block';
+  document.getElementById('sv-island').style.animation = 'shake 0.4s ease-in-out infinite';
+  document.querySelectorAll('.sv-building').forEach(function(b){ b.setAttribute('fill','var(--red2)'); });
+  var sat = document.getElementById('sat-warn');
+  if (sat) sat.style.display = 'block';
+  var ctrl = document.getElementById('sv-ctrl');
+  if (ctrl) { ctrl.style.borderColor='var(--red2)'; ctrl.style.background='rgba(220,38,38,.1)'; ctrl.style.boxShadow='0 0 16px rgba(220,38,38,.3)'; }
+  document.querySelector('#sv-ctrl-lbl').style.color = 'var(--red2)';
+  document.querySelectorAll('.s-status[data-id="warn"]').forEach(function(el){ el.textContent='● ACTIVE'; el.style.color='var(--red2)'; el.style.animation='blinkAlert .8s step-end infinite'; });
+  activatePanel('db-a','var(--red2)','ALERT','db-a-lbl','db-a-st');
+  document.getElementById('emerg-panel').style.display = 'block';
+  document.getElementById('nav-sim-dot').style.background = 'var(--red2)';
+  document.getElementById('nav-sim-dot').style.boxShadow = '0 0 6px var(--red2)';
+  document.getElementById('nav-sim-dot').style.animation = 'blinkAlert .8s step-end infinite';
+  logEvent('T+'+(seisTime()*3.2).toFixed(0)+'min — ⚠ TSUNAMI WARNING ISSUED FOR WAVARA!', 'var(--red2)');
+}
+
+function onSimComplete() {
+  simState = 'complete';
+  document.getElementById('sim-btn').disabled = false;
+  document.getElementById('sim-btn').textContent = '⚡ Start Earthquake';
+  document.getElementById('sv-complete').style.display = 'block';
+  logEvent('SIMULATION COMPLETE — Hybrid advantage: '+hybridAdv().toFixed(1)+' hrs.', 'var(--green)');
+}
+
+function logEvent(txt, color) {
+  var log = document.getElementById('event-log');
+  var d = document.createElement('div');
+  d.style.color = color || 'var(--text)';
+  d.style.animation = 'dashIn .3s ease';
+  d.textContent = txt;
+  log.appendChild(d);
+  log.scrollTop = log.scrollHeight;
+  while (log.children.length > 10) log.removeChild(log.firstChild);
+}
+
+function resetSim() {
+  if (simRAF) { cancelAnimationFrame(simRAF); simRAF=null; }
+  simState='idle'; sDetected=bDetected=wIssued=false; seisPos=tsuPos=0;
+  document.getElementById('sim-btn').disabled=false;
+  document.getElementById('sim-btn').textContent='⚡ Start Earthquake';
+  ['sv-pbar','ug-pbar','cs-pbar'].forEach(function(id){ var e=document.getElementById(id); if(e) e.style.display='none'; });
+  ['sv-pfill','ug-pfill','cs-pfill'].forEach(function(id){ var e=document.getElementById(id); if(e) e.style.width='0'; });
+  document.getElementById('sv-complete').style.display='none';
+  document.getElementById('emerg-panel').style.display='none';
+  document.getElementById('sv-island-alert').style.display='none';
+  document.getElementById('sv-island').style.animation='';
+  document.getElementById('sv-arrows').style.display='none';
+  ['sv-swave','ug-swave','cs-swave'].forEach(function(id){ var e=document.getElementById(id); if(e) e.style.display='none'; });
+  ['sv-tsunami','cs-tsunami'].forEach(function(id){ var e=document.getElementById(id); if(e) e.style.display='none'; });
+  var str = document.getElementById('sat-tsunami-ring');
+  if (str) str.setAttribute('r','0');
+  var sw = document.getElementById('sat-warn');
+  if (sw) sw.style.display='none';
+  ['sv-sensor','ug-sensor','cs-sensor'].forEach(function(cls){
+    document.querySelectorAll('.'+cls).forEach(function(el){ el.style.background='var(--panel2)'; el.style.borderColor='var(--muted2)'; el.style.color='var(--muted2)'; el.style.boxShadow='none'; });
+  });
+  document.querySelectorAll('.buoy-top,.cs-buoy-top').forEach(function(el){ try{el.setAttribute('stroke','var(--muted2)');el.setAttribute('fill','rgba(27,42,58,.8)');}catch(e){} });
+  document.querySelectorAll('.buoy-lbl').forEach(function(el){ el.style.color='var(--muted2)'; });
+  ['sat-b1','sat-b2'].forEach(function(id){ var e=document.getElementById(id); if(e){e.setAttribute('fill','rgba(91,192,190,.7)');e.setAttribute('stroke','var(--seafoam)');} });
+  document.querySelectorAll('.s-status').forEach(function(el){ el.textContent='○ Standby'; el.style.color='var(--border2)'; el.style.animation=''; });
+  ['db-s','db-b','db-h','db-a'].forEach(function(id){ var e=document.getElementById(id); if(e){e.style.borderColor='var(--border)';e.style.background='var(--bg)';e.style.boxShadow='none';} });
+  ['db-s-lbl','db-b-lbl','db-h-lbl','db-a-lbl'].forEach(function(id){ var e=document.getElementById(id); if(e)e.style.color='var(--muted)'; });
+  ['db-s-st','db-b-st','db-h-st','db-a-st'].forEach(function(id){ var e=document.getElementById(id); if(e){e.textContent='○ Standby';e.style.color='var(--border2)';e.style.animation='';} });
+  var ctrl=document.getElementById('sv-ctrl');
+  if(ctrl){ctrl.style.borderColor='var(--border)';ctrl.style.background='var(--panel)';ctrl.style.boxShadow='none';}
+  var ctrll=document.querySelector('#sv-ctrl-lbl');
+  if(ctrll)ctrll.style.color='var(--muted)';
+  document.querySelectorAll('.sv-building').forEach(function(b){ b.setAttribute('fill','#1e3040'); });
+  ['surf-eq-pulses','ug-pulses','cross-pulses'].forEach(function(id){ var e=document.getElementById(id); if(e)e.innerHTML=''; });
+  var nd=document.getElementById('nav-sim-dot');
+  if(nd){nd.style.background='var(--border2)';nd.style.boxShadow='none';nd.style.animation='';}
+  document.getElementById('event-log').innerHTML='<div>System standby...</div>';
+  var tlf=document.getElementById('tl-tsunami-fill');
+  if(tlf)tlf.style.width='0';
+}
+
+/* ════════════════════════════════════════════════
+   WAVE SCIENCE ANIMATIONS
+════════════════════════════════════════════════ */
+function updateWaveScience() {
+  var f = parseFloat(document.getElementById('ws-f').value);
+  var a = parseFloat(document.getElementById('ws-a').value);
+  setText('ws-fv', f.toFixed(1)+' Hz');
+  setText('ws-av', a);
+  setText('ws-formula', 'v = fλ  ·  f = '+f+' Hz  ·  T = '+(1/f).toFixed(2)+' s  ·  v ∝ √depth');
+}
+
+function startWaveAnim() {
+  if (waveRAF) return;
+  genStars('hero-stars',0);
+  var t = 0;
+  function frame() {
+    t += 0.038;
+    var f = parseFloat(document.getElementById('ws-f').value)||1;
+    var a = parseFloat(document.getElementById('ws-a').value)||30;
+    var W=560, H=105;
+    // Science wave
+    var pts = [];
+    for (var x=0; x<=W; x+=2) {
+      var y = H/2 + a * Math.sin((x/W)*f*Math.PI*2*2 - t*f);
+      pts.push(x+','+y);
+    }
+    var wp = document.getElementById('ws-path');
+    if (wp) wp.setAttribute('d', 'M '+pts.join(' L '));
+    var lambdaPx = W/(f*2);
+    var wlLine = document.getElementById('ws-wl-line');
+    if (wlLine) { wlLine.setAttribute('x2', lambdaPx); }
+    var wlTxt = document.getElementById('ws-wl-txt');
+    if (wlTxt) { wlTxt.setAttribute('x', lambdaPx/2); }
+    var crest = document.getElementById('ws-crest');
+    if (crest) { crest.setAttribute('cx', W/(f*4)); crest.setAttribute('cy', H/2 - a); }
+    // Transverse
+    var tvDots = [];
+    for (var i=0; i<16; i++) {
+      var xi = 20+i*32;
+      var yi = 50+25*Math.sin(i*0.7-t*2);
+      tvDots.push(xi+','+yi);
+    }
+    var tvp = document.getElementById('tv-path');
+    if (tvp) tvp.setAttribute('d', 'M '+tvDots.join(' L '));
+    // Longitudinal
+    var lg = document.getElementById('lv-dots');
+    if (lg) {
+      var s = '';
+      for (var i2=0; i2<20; i2++) {
+        var bx = 14+i2*24;
+        var dx = 10*Math.sin(i2*0.8-t*2);
+        s += '<circle cx="'+(bx+dx)+'" cy="50" r="4" fill="var(--amber)" fill-opacity=".8"/>';
+      }
+      lg.innerHTML = s;
+    }
+    waveRAF = requestAnimationFrame(frame);
+  }
+  frame();
+}
+
+function stopWaveAnim() { if (waveRAF) { cancelAnimationFrame(waveRAF); waveRAF=null; } }
+
+/* ════════════════════════════════════════════════
+   WAVE EQUATION ANIMATION
+════════════════════════════════════════════════ */
+function updateEq() {
+  var f = parseFloat(document.getElementById('eq-f').value);
+  var wl = parseFloat(document.getElementById('eq-w').value);
+  var spd = Math.round(f*wl);
+  setText('eq-fv', f.toFixed(1)+' Hz');
+  setText('eq-wv', wl+' m');
+  setText('eq-f-disp', f.toFixed(1)+' Hz');
+  setText('eq-w-disp', wl+' m');
+  setText('eq-spd-disp', spd+' m/s');
+  setText('eq-wl-ann', 'λ = '+wl+'m');
+  setText('eq-formula', 'v = f × λ = '+f+' × '+wl+' = '+spd+' m/s  ·  T = 1/f = '+(1/f).toFixed(3)+' s  ·  Higher f = shorter λ (constant speed)');
+}
+
+function startEqAnim() {
+  if (eqRAF) return;
+  var t = 0;
+  function frame() {
+    t += 0.05;
+    var f = parseFloat(document.getElementById('eq-f').value)||2;
+    var wl = parseFloat(document.getElementById('eq-w').value)||80;
+    var W=560, H=120;
+    var k = (2*Math.PI)/wl;
+    var omega = 2*Math.PI*f;
+    var pts = [];
+    for (var x=0; x<=W; x+=2) {
+      var y = H/2 + 35*Math.sin(k*x - omega*t*0.02);
+      pts.push(x+','+y);
+    }
+    var ep = document.getElementById('eq-path');
+    if (ep) ep.setAttribute('d', 'M '+pts.join(' L '));
+    var wll = document.getElementById('eq-wl-line');
+    if (wll) { wll.setAttribute('x2', 20+wl); }
+    var wla = document.getElementById('eq-wl-ann');
+    if (wla) { wla.setAttribute('x', 20+wl/2); }
+    eqRAF = requestAnimationFrame(frame);
+  }
+  frame();
+}
+function stopEqAnim() { if (eqRAF) { cancelAnimationFrame(eqRAF); eqRAF=null; } }
+
+/* ════════════════════════════════════════════════
+   CONCEPT CARDS
+════════════════════════════════════════════════ */
+function showC(el, title, desc) {
+  el.style.borderColor = 'var(--seafoam2)';
+  el.style.boxShadow = '0 0 18px rgba(91,192,190,.12)';
+  var b = el.querySelector('.cc-body');
+  if (b) { b.style.fontSize='10px'; b.style.color='var(--text)'; b.style.lineHeight='1.65'; b.style.animation='fadeIn .2s ease'; b.textContent=desc; }
+}
+function hideC(el) {
+  el.style.borderColor = 'var(--border)';
+  el.style.boxShadow = 'none';
+  var b = el.querySelector('.cc-body');
+  if (b) { b.style.fontSize='9px'; b.style.color='var(--muted)'; b.textContent='Hover to learn →'; }
+}
+
+/* ════════════════════════════════════════════════
+   COMPARISON
+════════════════════════════════════════════════ */
+var CMP_SYS = {
+  seismic: { label:'System A — Seismic Only', color:'var(--seafoam2)', stats:{cost:3,speed:9,reliability:7,falseAlarm:5,evacuation:9}, desc:'Seismic sensors detect earthquakes instantly but cannot confirm tsunami generation. High speed but elevated false alarm risk — not every earthquake produces a tsunami.' },
+  buoy: { label:'System B — Buoy Only', color:'var(--blue)', stats:{cost:5,speed:5,reliability:8,falseAlarm:3,evacuation:5}, desc:'Ocean pressure buoys confirm tsunami presence with high accuracy. However the wave must physically reach the buoy first — destroying the warning time advantage.' },
+  hybrid: { label:'★ Hybrid WaveGuard', color:'var(--green)', stats:{cost:7,speed:8,reliability:10,falseAlarm:2,evacuation:9}, desc:'Combining both systems gives seismic speed with buoy confirmation accuracy. 6.5 hour warning advantage. Lowest false alarm risk. Best across every metric.' }
+};
+var CMP_METRICS = [
+  {key:'speed',label:'Detection Speed'},{key:'reliability',label:'Reliability'},
+  {key:'evacuation',label:'Evacuation Advantage'},{key:'falseAlarm',label:'False Alarm Risk',invert:true},{key:'cost',label:'Implementation Cost',invert:true}
+];
+var selectedSys = 'seismic';
+
+function selectSys(key) {
+  selectedSys = key;
+  var s = CMP_SYS[key];
+  var t = document.getElementById('cmp-title');
+  if (t) { t.textContent=s.label; t.style.color=s.color; }
+  setText('cmp-desc', s.desc);
+  var m = document.getElementById('cmp-metrics');
+  if (m) {
+    m.innerHTML = '';
+    CMP_METRICS.forEach(function(mt){
+      var val = s.stats[mt.key];
+      var disp = mt.invert ? 10-val : val;
+      m.innerHTML += '<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:10px;color:var(--muted)">'+mt.label+'</span><span class="mono" style="font-size:11px;color:'+s.color+'">'+disp+'/10</span></div><div class="threat-bar"><div class="threat-fill" style="width:'+(disp*10)+'%;background:linear-gradient(90deg,'+s.color.replace(')',',0.5)').replace('var(--','rgba(').replace(')','+')+','+s.color+');transition:width .5s ease"></div></div></div>';
+    });
+  }
+  ['seismic','buoy','hybrid'].forEach(function(k){
+    var b = document.getElementById('cmp-'+k[0]+'-btn') || document.getElementById('cmp-'+(k==='seismic'?'s':k==='buoy'?'b':'h')+'-btn');
+    // Try both naming conventions
+    var btn = document.getElementById('cmp-'+k+'-btn') || document.getElementById('cmp-s-btn');
+  });
+  // Update button states
+  document.getElementById('cmp-s-btn').className = 'tab-btn' + (key==='seismic'?' active':'');
+  document.getElementById('cmp-s-btn').style.color = key==='seismic'?'var(--seafoam2)':'var(--muted)';
+  document.getElementById('cmp-s-btn').style.borderColor = key==='seismic'?'var(--seafoam2)':'var(--border)';
+  document.getElementById('cmp-b-btn').className = 'tab-btn' + (key==='buoy'?' active':'');
+  document.getElementById('cmp-b-btn').style.color = key==='buoy'?'var(--blue)':'var(--muted)';
+  document.getElementById('cmp-b-btn').style.borderColor = key==='buoy'?'var(--blue)':'var(--border)';
+  document.getElementById('cmp-h-btn').className = 'tab-btn' + (key==='hybrid'?' active':'');
+  document.getElementById('cmp-h-btn').style.color = key==='hybrid'?'var(--green)':'var(--muted)';
+  document.getElementById('cmp-h-btn').style.borderColor = key==='hybrid'?'var(--green)':'var(--border)';
+  updateRadar();
+}
+
+function pentagon(cx, cy, r) {
+  return Array.from({length:5},function(_,i){ var a=(i/5)*Math.PI*2-Math.PI/2; return (cx+r*Math.cos(a))+','+(cy+r*Math.sin(a)); }).join(' ');
+}
+function radarPts(cx,cy,vals,maxR) {
+  var n=vals.length;
+  return vals.map(function(v,i){ var a=(i/n)*Math.PI*2-Math.PI/2; var r=(v/10)*maxR; return (cx+r*Math.cos(a))+','+(cy+r*Math.sin(a)); }).join(' ');
+}
+
+function initRadar() {
+  [2,4,6,8,10].forEach(function(lvl){ var el=document.getElementById('rp'+lvl); if(el)el.setAttribute('points',pentagon(150,120,lvl/10*90)); });
+}
+function updateRadar() {
+  Object.entries(CMP_SYS).forEach(function(entry){
+    var key=entry[0], sys=entry[1];
+    var el=document.getElementById('radar-'+key);
+    if(!el)return;
+    var vals=[sys.stats.speed,sys.stats.reliability,sys.stats.evacuation,10-sys.stats.falseAlarm,10-sys.stats.cost];
+    el.setAttribute('points',radarPts(150,120,vals,90));
+    var isSelected = key===selectedSys;
+    el.setAttribute('stroke-width', isSelected?'2.5':'1');
+    el.setAttribute('stroke-opacity', isSelected?'1':'.5');
+  });
+}
+
+/* ════════════════════════════════════════════════
+   GRAPHS
+════════════════════════════════════════════════ */
+function updateGraphs() {
+  // Depth graph
+  var depths=[500,1000,2000,3000,4000,5000,6000,7000,8000,10000,12000];
+  var speeds=depths.map(function(d){ return Math.round(Math.sqrt(9.81*d)*3.6); });
+  var maxSpd=Math.max.apply(null,speeds);
+  var W=260,H=165,pL=36,pB=28,pT=12,pR=8;
+  var gW=W-pL-pR, gH=H-pB-pT;
+  var dToX=function(d){ return pL+((d-500)/(12000-500))*gW; };
+  var sToY=function(s){ return pT+gH-(s/maxSpd)*gH; };
+  var lp=depths.map(function(d,i){ return (i===0?'M':'L')+' '+dToX(d)+' '+sToY(speeds[i]); }).join(' ');
+  var pathEl=document.getElementById('g-depth-path');
+  if(pathEl) pathEl.setAttribute('d',lp);
+  var curX=dToX(Math.min(P.oceanDepth,12000));
+  var curSpd=Math.round(Math.sqrt(9.81*P.oceanDepth)*3.6);
+  var curY=sToY(Math.min(curSpd,maxSpd));
+  var vl=document.getElementById('g-depth-vline'); if(vl){vl.setAttribute('x1',curX);vl.setAttribute('x2',curX);}
+  var dot=document.getElementById('g-depth-dot'); if(dot){dot.setAttribute('cx',curX);dot.setAttribute('cy',curY);}
+  setText('g-depth-lbl',P.oceanDepth+'m → '+curSpd+' km/h');
+  // Speed bars
+  var g=document.getElementById('g-speed-bars');
+  if(g){
+    var items=[
+      {lbl:'Seismic Wave',val:P.seismicSpeed,color:'var(--amber)'},
+      {lbl:'Tsunami Wave',val:P.tsunamiSpeed,color:'var(--blue)'},
+      {lbl:'Sound (Water)',val:5400,color:'var(--muted2)'}
+    ];
+    var maxV=Math.max.apply(null,[P.seismicSpeed,P.tsunamiSpeed,5400,1]);
+    g.innerHTML=items.map(function(it,i){
+      var bw=Math.max(4,(it.val/maxV)*220);
+      var y=20+i*44;
+      var vs=it.val>=1000?(it.val/1000).toFixed(1)+'k':it.val;
+      return '<text x="10" y="'+y+'" fill="'+it.color+'" font-size="9" font-family="monospace">'+it.lbl+'</text>'+
+             '<rect x="10" y="'+(y+6)+'" width="'+bw+'" height="16" rx="2" fill="'+it.color+'" fill-opacity=".3"/>'+
+             '<rect x="10" y="'+(y+6)+'" width="'+bw+'" height="3" rx="1.5" fill="'+it.color+'"/>'+
+             '<text x="'+(14+bw)+'" y="'+(y+19)+'" fill="'+it.color+'" font-size="8" font-family="monospace">'+vs+' km/h</text>';
+    }).join('');
+    var ratio=Math.round(P.seismicSpeed/P.tsunamiSpeed);
+    setText('g-speed-note','Seismic ~'+ratio+'× faster than tsunami');
+  }
+}
+
+/* ════════════════════════════════════════════════
+   INIT
+════════════════════════════════════════════════ */
+function initApp() {
+  genStars('hero-stars', 45);
+  updateParams();
+  updateLiveData();
+  initRadar();
+  selectSys('seismic');
+  updateGraphs();
+  document.getElementById('safety-date').textContent = new Date().toUTCString();
+}
+</script>
+</body>
+</html>
